@@ -1,0 +1,343 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage[margin=0.6in]{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{booktabs}
+\usepackage{colortbl}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\usepackage{caption}
+\usepackage{longtable}
+\usepackage{listings}
+\usepackage{seqsplit}
+
+% Cores do Relatório Corporativo (mesma paleta da revisão v2)
+\definecolor{primary}{HTML}{0F2A4A}
+\definecolor{secondary}{HTML}{008080}
+\definecolor{accent}{HTML}{C0392B}
+\definecolor{lightbg}{HTML}{F4F6F7}
+\definecolor{bordergray}{HTML}{BDC3C7}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=primary,
+    filecolor=secondary,
+    urlcolor=secondary,
+    citecolor=primary,
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\fontsize{9}{11}\selectfont\color{primary}\textbf{AMBIENTE E CENÁRIO DE AVALIAÇÃO: FL ROBUSTO}}
+\fancyhead[R]{\fontsize{9}{11}\selectfont\color{primary}\textbf{ENTREGÁVEL 02 (IC)}}
+\fancyfoot[L]{\fontsize{8}{10}\selectfont\color{gray}Confidencial - Para fins acadêmicos e de pesquisa}
+\fancyfoot[R]{\fontsize{9}{11}\selectfont\color{primary}\textbf{Página \thepage}}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{secondary}\leaders\hrule height 0.6pt\hfill}}
+\renewcommand{\footrule}{\hbox to\headwidth{\color{bordergray!50}\leaders\hrule height 0.4pt\hfill}}
+
+\usepackage{titlesec}
+\titleformat{\section}
+  {\color{primary}\normalfont\large\bfseries}
+  {\thesection}{1em}{}[{\color{secondary}\titlerule[1pt]}]
+\titleformat{\subsection}
+  {\color{secondary}\normalfont\normalsize\bfseries}
+  {\thesubsection}{1em}{}
+
+\newtcolorbox{calloutbox}[1]{
+  colback=lightbg, colframe=secondary, fonttitle=\bfseries\color{white}, coltitle=white,
+  title=#1, boxrule=0.8pt, left=8pt, right=8pt, top=8pt, bottom=8pt, sharp corners
+}
+\newtcolorbox{alertbox}[1]{
+  colback=lightbg, colframe=accent, fonttitle=\bfseries\color{white}, coltitle=white,
+  title=#1, boxrule=0.8pt, left=8pt, right=8pt, top=8pt, bottom=8pt, sharp corners
+}
+
+\lstset{
+  basicstyle=\ttfamily\fontsize{7.5}{9}\selectfont,
+  breaklines=true,
+  frame=single,
+  rulecolor=\color{bordergray},
+  backgroundcolor=\color{lightbg},
+  columns=fullflexible,
+}
+
+\begin{document}
+
+\begin{center}
+    \vspace*{10pt}
+    {\color{primary}\fontsize{20}{24}\selectfont\textbf{AMBIENTE VALIDADO E CENÁRIO DE AVALIAÇÃO}} \\[8pt]
+    {\color{secondary}\fontsize{13}{16}\selectfont\textbf{Configuração do Ambiente Experimental para Combate a Ameaças em Aprendizado Federado}} \\[12pt]
+    {\color{gray}\fontsize{9}{11}\selectfont\textit{Laboratório de Robustez FL: Stack, Modelo, Dados Não-IID, Matriz de Ataques x Defesas e Protocolo Experimental}} \\[8pt]
+    \noindent\makebox[\linewidth]{\color{secondary!50}\rule{\textwidth}{1.2pt}}
+    \vspace*{10pt}
+\end{center}
+
+\section*{Objetivo e Escopo}
+Este documento é o segundo entregável do ciclo de pesquisa e decorre diretamente da revisão sistemática
+\textit{``Ataques e Defesas em Aprendizado Federado''} (Entregável 01). Seu propósito é registrar a
+\textbf{configuração do ambiente} e a \textbf{definição do cenário de avaliação} usados para construir e
+validar uma ferramenta experimental (\texttt{fl-robustness-lab}) capaz de reproduzir, sob condições
+controladas, as principais classes de ataque mapeadas na revisão (envenenamento de dados, envenenamento de
+modelo bizantino ``onisciente'', backdoors) e de avaliar defesas de referência da literatura — incluindo o
+BOBA \cite{boba} e o RAGNAR \cite{ragnar}, este último de autoria do próprio grupo de pesquisa. O entregável
+correspondente é composto por dois artefatos:
+
+\begin{calloutbox}{Entregável desta etapa}
+\textbf{(1) Ambiente validado} — repositório \texttt{fl-robustness-lab/} com pipeline de FL simulado em
+PyTorch, 10 ataques e 9 defesas implementados como módulos plugáveis, e um teste de fumaça (\textit{smoke
+test}) que executa ponta-a-ponta cada combinação relevante ataque$\times$defesa, confirmando que o ambiente
+está operacional antes de qualquer execução experimental de longa duração.\\[4pt]
+\textbf{(2) Este documento} — a definição formal do cenário de avaliação (dados, modelo, protocolo,
+métricas e matriz de experimentos) que orienta as execuções subsequentes do ciclo.
+\end{calloutbox}
+
+\section{Configuração do Ambiente}
+
+\subsection{Hardware e Stack de Software}
+O ambiente foi validado na máquina de desenvolvimento local do pesquisador. A tabela abaixo resume a
+configuração efetivamente instalada e testada.
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabular}{p{4.2cm}p{10cm}}
+\toprule
+\textbf{Componente} & \textbf{Configuração validada} \\
+\midrule
+\rowcolor{lightbg} GPU & NVIDIA GeForce MX450 (2GB VRAM), driver 595.84, CUDA 12.1 \\
+CPU / fallback & Execução em CPU suportada nativamente (\texttt{torch.device} com detecção automática) \\
+\rowcolor{lightbg} Python & 3.11.16 (ambiente virtual isolado \texttt{.venv}, independente do Python 3.14 do sistema) \\
+Framework de DL & PyTorch 2.5.1+cu121 / TorchVision 0.20.1+cu121 \\
+\rowcolor{lightbg} Simulação de FL & Loop custom em processo único (servidor + $N$ clientes simulados sequencialmente) — decisão registrada abaixo \\
+Bibliotecas auxiliares & NumPy, scikit-learn, XGBoost, PyYAML, Pandas, Matplotlib \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{calloutbox}{Decisão de Design: Simulação Custom vs. Framework de Produção}
+Optou-se por um laço de simulação de FL implementado diretamente em PyTorch (servidor e clientes
+simulados em processo único), em vez de um framework de produção como Flower. Esta é a abordagem
+dominante na literatura de ataques/defesas revisada (BOBA, Blades, FedMLSecurity operam sob o mesmo
+paradigma de simulação onisciente) e maximiza a flexibilidade para implementar ataques ``oniscientes''
+(IPM, LIE, MinMax/MinSum) que exigem acesso direto às atualizações de outros clientes no mesmo round —
+algo não trivial de expressar nas abstrações cliente-servidor de frameworks distribuídos reais.
+\end{calloutbox}
+
+\subsection{Estrutura do Repositório}
+\begin{lstlisting}
+fl-robustness-lab/
+  src/
+    config.py              # ScenarioConfig (dataclass) - contrato de definicao de cenario
+    models/cnn.py           # SmallCNN (188.810 parametros) para CIFAR-10
+    data/
+      partition.py          # particionamento nao-IID via Dirichlet
+      datasets.py            # CIFAR-10, LabelFlipDataset, BackdoorDataset/EvalDataset
+    attacks/
+      data_poisoning.py     # label flipping
+      backdoor.py            # gatilho pixel-pattern + constrain-and-scale
+      model_poisoning.py    # gaussian, sign flip, IPM, LIE, MinMax, MinSum
+      registry.py             # ATTACK_REGISTRY (nome -> kind + funcoes)
+    defenses/
+      aggregators.py         # FedAvg, Median, Trimmed Mean, Krum, Multi-Krum
+      foolsgold.py             # FoolsGold (similaridade historica)
+      whitening.py             # multi-metrica L1/L2/cosseno + branqueamento
+      boba.py                    # BOBA simplificado (SVD robusta + simplex)
+      ragnar.py                  # RAGNAR (features geometricas + XGBoost)
+      registry.py             # DEFENSE_REGISTRY
+    federated/
+      client.py                # treino local -> vetor delta
+      server.py / simulate.py  # orquestracao dos rounds, ataque, defesa, avaliacao
+    metrics.py                # MA%, BA%/ASR, precisao/revocacao de deteccao
+  scenarios/*.yaml           # 13 cenarios pre-definidos (ver Secao 4)
+  experiments/run_scenario.py  # CLI de execucao
+  tests/smoke_test.py        # validacao ponta-a-ponta do ambiente
+  results/                   # saida JSON por cenario
+\end{lstlisting}
+
+\subsection{Reprodutibilidade}
+Todas as execuções são parametrizadas por um \texttt{ScenarioConfig} serializável em YAML (semente
+aleatória, número de clientes, fração maliciosa, ataque, defesa e seus hiperparâmetros, taxa de
+não-IID). Cada execução grava um JSON em \texttt{results/} com o histórico completo de métricas por
+round, permitindo comparação determinística entre configurações a partir da mesma semente.
+
+\section{Modelo e Conjunto de Dados}
+
+\subsection{Dataset}
+Segue-se o padrão da literatura revisada (Figuras 1 e 2 da revisão): \textbf{CIFAR-10} (60.000 imagens
+RGB 32$\times$32, 10 classes). O conjunto de treino é dividido em (i) um \textit{holdout} limpo e
+estratificado no servidor (padrão: 100 amostras, $\sim$10/classe — usado pelas defesas com raiz de
+confiança, BOBA e para o bootstrap do classificador RAGNAR) e (ii) o restante, particionado entre os
+clientes.
+
+\subsection{Modelo}
+CNN leve e propositalmente compacta (\texttt{SmallCNN}, 188.810 parâmetros: 3 blocos conv-relu-maxpool +
+\texttt{fc1} (128 unidades) + \texttt{fc2} (10 classes)). O dimensionamento reduzido é uma decisão
+deliberada de engenharia, não apenas de conveniência: agregadores como Krum (distâncias par-a-par) e BOBA
+(SVD truncada sobre a matriz de deltas) escalam com a dimensão do modelo $D$, e o hardware de validação
+disponível (2GB VRAM) impõe um teto prático. Adicionalmente, \texttt{fc1} corresponde à camada
+tipicamente identificada na literatura como \textit{Backdoor-Critical (BC) layer} em CNNs (Seção 3.3 da
+revisão), preservando relevância experimental para investigação futura de ataques furtivos por camada
+(LP/LF attacks).
+
+\subsection{Particionamento Não-IID (Label Skewness)}
+Distribuição de Dirichlet por classe entre clientes, parametrizada por $\alpha$: valores baixos
+($\alpha \in [0.1, 0.3]$) reproduzem o cenário de \textit{label skewness} severo explorado pelo BOBA, no
+qual gradientes benignos heterogêneos podem ser confundidos com atualizações bizantinas por defesas
+geométricas clássicas; $\alpha \geq 0.5$ aproxima-se de um regime quase-IID, usado como baseline.
+
+\section{Taxonomia de Ameaças Implementada}
+Mapeamento direto da taxonomia consolidada na revisão (Seção 3) para os módulos de ataque do ambiente.
+
+\begin{table}[htbp]
+\centering
+\fontsize{8}{10}\selectfont
+\begin{tabular}{p{2.6cm}p{2.2cm}p{6.5cm}p{3.3cm}}
+\toprule
+\textbf{Ataque} & \textbf{Canal} & \textbf{Mecanismo implementado} & \textbf{Referência na revisão} \\
+\midrule
+\rowcolor{lightbg} \texttt{label\_flip} & Dados & Inversão fixa (classe fonte$\to$alvo) ou aleatória do rótulo antes do treino local & Label Flipping [6] \\
+\texttt{backdoor\_pixel} & Dados (targeted) & Patch-gatilho pixel-pattern + reescrita de rótulo em fração configurável das amostras & Backdoor / BadNets \\
+\rowcolor{lightbg} \texttt{backdoor\_pgd} & Dados + Modelo & \texttt{backdoor\_pixel} + \textit{constrain-and-scale} (escala + projeção em bola $L_2$) — simplificação operacional do conceito Edge-case PGD & Edge-case PGD [11] \\
+\texttt{gaussian\_noise} & Modelo (onisciente) & Vetor aleatório $\mathcal{N}(0,\sigma^2 I)$ substitui o delta & Ruído Gaussiano \\
+\rowcolor{lightbg} \texttt{sign\_flip} & Modelo (onisciente) & $-\text{escala}\times \overline{\Delta}_{benignos}$ & Sign Flipping \\
+\texttt{ipm} & Modelo (onisciente) & Inner Product Manipulation: $-\epsilon\,\overline{\Delta}_{benignos}$ & IPM [3] \\
+\rowcolor{lightbg} \texttt{lie} & Modelo (onisciente) & A Little Is Enough: $\overline{\Delta} + z\cdot\sigma_{\Delta}$ & LIE [3] \\
+\texttt{minmax} / \texttt{minsum} & Modelo (onisciente) & Perturbação escalada via busca binária, limitada pela distância máxima/soma observada entre benignos & MinMax/MinSum [3] \\
+\bottomrule
+\end{tabular}
+\caption{Ataques implementados. ``Onisciente'' = o adversário observa os deltas benignos do round corrente antes de sintetizar sua atualização (modelagem padrão em BOBA/Blades).}
+\end{table}
+
+\section{Taxonomia de Defesas Implementada}
+
+\begin{table}[htbp]
+\centering
+\fontsize{8}{10}\selectfont
+\begin{tabular}{p{2.6cm}p{6.7cm}p{5.3cm}}
+\toprule
+\textbf{Defesa} & \textbf{Mecanismo implementado} & \textbf{Observação de fidelidade} \\
+\midrule
+\rowcolor{lightbg} FedAvg & Média ponderada por nº de amostras (baseline sem defesa) & Fiel \\
+Median / Trimmed Mean & Estatística robusta coordenada-a-coordenada & Fiel \\
+\rowcolor{lightbg} Krum / Multi-Krum & Seleciona cliente(s) com menor soma de distâncias euclidianas aos $n-f-2$ vizinhos mais próximos & Fiel (Blanchard et al.) \\
+FoolsGold & Similaridade de cosseno histórica acumulada, com \textit{pardoning} e transformação logística & Fiel (Fung et al.) \\
+\rowcolor{lightbg} Multi-métrica + Branqueamento & Vetor [L1, L2, cosseno] por cliente $\to$ distância de Mahalanobis (branqueamento pela covariância) $\to$ exclui fração suspeita & Fiel em espírito ao indicador multi-métrica \cite{multimetrics} \\
+\textbf{BOBA} & SVD truncada robusta (posto $c{-}1$) para subespaço honesto + gradientes de referência por classe (holdout do servidor) $\to$ coordenadas baricêntricas $\to$ exclui distribuições anomalamente negativas & \textbf{Simplificado} — ver Seção 5.1 \\
+\rowcolor{lightbg} \textbf{RAGNAR} & Features [L1, L2, L3, cosseno] $\to$ classificador XGBoost, treinado em fase de \textit{bootstrap} com histórico simulado de ataques mistos & Fiel ao mecanismo; bootstrap é uma escolha de engenharia para viabilizar o classificador em ambiente offline \\
+\bottomrule
+\end{tabular}
+\caption{Defesas implementadas, com registro explícito de simplificações em relação aos artigos originais.}
+\end{table}
+
+\subsection{Simplificações Assumidas (Honestidade Científica)}
+\begin{alertbox}{Limitações Conhecidas da Implementação Atual}
+\begin{itemize}
+\item \textbf{BOBA}: a estimação dos vértices do simplex usa gradientes de referência por classe
+  calculados diretamente sobre o modelo global corrente (via holdout do servidor), em vez do
+  procedimento de mínimos quadrados restrito ao simplex descrito com rigor no artigo original. A
+  estrutura central (subespaço honesto via SVD robusta + rejeição por coordenada baricêntrica negativa)
+  é preservada.
+\item \textbf{Edge-case PGD}: \texttt{backdoor\_pgd} não realiza mineração de amostras naturais raras
+  (\textit{edge-case}); combina o gatilho pixel-pattern padrão com \textit{constrain-and-scale}, captando
+  a propriedade central do ataque (evasão de defesas baseadas em norma) sem reproduzir a curadoria de
+  dados do artigo original.
+\item \textbf{Camadas Críticas de Backdoor (BC layers / LP / LF attacks)}: mapeadas na revisão
+  (Seção 3.3) mas \textbf{não implementadas} nesta primeira versão do ambiente — ficam registradas como
+  extensão futura (Seção 7).
+\item \textbf{Escala}: o modelo (188k parâmetros) e o hardware (2GB VRAM) são deliberadamente modestos
+  para viabilizar a fase de validação; resultados numéricos de robustez com este \texttt{SmallCNN} não
+  devem ser extrapolados diretamente para arquiteturas profundas (ResNet18/VGG19) sem nova rodada de
+  validação.
+\end{itemize}
+\end{alertbox}
+
+\section{Matriz de Cenários de Avaliação}
+Foram definidos 13 cenários (\texttt{scenarios/*.yaml}), cobrindo sistematicamente as três frentes da
+taxonomia (ataques bizantinos não-direcionados, backdoors direcionados, e o eixo de label skewness) contra
+defesas clássicas e de última geração. Protocolo comum, salvo indicação contrária: 20 clientes, 20\% de
+clientes maliciosos (4/20, ou 2/20 nos cenários de backdoor), 40--50 rounds, 1 época local por round,
+\textit{batch size} 32, SGD (lr=0.01, momentum=0.9), holdout do servidor de 100 amostras, avaliação a cada
+5 rounds.
+
+\begin{center}
+\fontsize{8}{9.5}\selectfont
+\begin{longtable}{p{3.6cm}p{2.1cm}p{2.6cm}p{0.9cm}p{6.0cm}}
+\toprule
+\textbf{Cenário} & \textbf{Ataque} & \textbf{Defesa} & \textbf{$\alpha$} & \textbf{Propósito} \\
+\midrule
+\endhead
+\rowcolor{lightbg} \texttt{\seqsplit{baseline\_fedavg\_no\_attack}} & none & fedavg & 0.5 & Referência de acurácia sem adversário \\
+\texttt{\seqsplit{gaussian\_krum}} & gaussian\_noise & krum & 0.5 & Robustez básica a ruído puro \\
+\rowcolor{lightbg} \texttt{\seqsplit{signflip\_trimmedmean}} & sign\_flip & trimmed\_mean & 0.5 & AGR coordenada-a-coordenada vs. inversão de sinal \\
+\texttt{\seqsplit{ipm\_median}} & ipm & median & 0.5 & Mediana vs. manipulação de produto interno \\
+\rowcolor{lightbg} \texttt{\seqsplit{lie\_multikrum}} & lie & multi\_krum & 0.5 & Sensibilidade do Multi-Krum a ataques furtivos (LIE) \\
+\texttt{\seqsplit{minmax\_krum\_labelskew}} & minmax & krum & \textbf{0.1} & Reproduz a falha do Krum sob label skewness severo (BOBA, Seção 4) \\
+\rowcolor{lightbg} \texttt{\seqsplit{minmax\_boba\_labelskew}} & minmax & boba & \textbf{0.1} & Comparação direta com o cenário acima — BOBA deve manter estabilidade onde o Krum colapsa \\
+\texttt{\seqsplit{labelflip\_foolsgold}} & label\_flip & foolsgold & 0.5 & Detecção de colusão em envenenamento de rótulo \\
+\rowcolor{lightbg} \texttt{\seqsplit{backdoor\_pixel\_fedavg}} & backdoor\_pixel & fedavg & 0.5 & Baseline sem defesa — expõe ASR alto \\
+\texttt{\seqsplit{backdoor\_pgd\_whitening}} & backdoor\_pgd & \seqsplit{multi\_metric\_whitening} & 0.5 & Indicador multi-métrica vs. backdoor norm-bounded \\
+\rowcolor{lightbg} \texttt{\seqsplit{backdoor\_pgd\_foolsgold}} & backdoor\_pgd & foolsgold & 0.5 & FoolsGold vs. backdoor norm-bounded \\
+\texttt{\seqsplit{labelflip\_ragnar}} & label\_flip & ragnar & 0.5 & Ferramenta proposta vs. envenenamento de dados \\
+\rowcolor{lightbg} \texttt{\seqsplit{backdoor\_pixel\_ragnar}} & backdoor\_pixel & ragnar & 0.5 & \textbf{Cenário-alvo}: ferramenta proposta (RAGNAR) vs. backdoor \\
+\bottomrule
+\caption{Matriz de cenários de avaliação definidos em \texttt{scenarios/}.}
+\end{longtable}
+\end{center}
+
+\section{Métricas de Avaliação}
+\begin{itemize}
+\item \textbf{MA\% (Main Accuracy)}: acurácia do modelo global no conjunto de teste limpo do CIFAR-10.
+\item \textbf{BA\% / ASR (Backdoor/Attack Success Rate)}: fração de amostras com gatilho inserido
+  (excluindo as já pertencentes à classe alvo) classificadas como a classe alvo do backdoor. Aplicável
+  apenas aos cenários com \texttt{backdoor\_pixel}/\texttt{backdoor\_pgd}.
+\item \textbf{Precisão / Revocação / F1 de detecção}: para defesas que explicitam quais clientes foram
+  excluídos do round (Krum, Multi-Krum, FoolsGold, Multi-métrica, BOBA, RAGNAR), compara-se o conjunto
+  excluído contra o conjunto real de clientes maliciosos daquele round.
+\end{itemize}
+
+\section{Validação do Ambiente}
+A validação consiste em um teste de fumaça (\texttt{tests/smoke\_test.py}) que executa, em modo reduzido
+(6 clientes, $\sim$40 amostras/cliente, 2 rounds), as 12 combinações ataque$\times$defesa mais
+representativas da matriz da Seção 4 — incluindo todas as 9 defesas e as 8 famílias de ataque — e verifica
+que (i) nenhuma exceção é lançada em nenhuma etapa do pipeline (particionamento, treino local, ataque,
+agregação, avaliação) e (ii) as métricas retornadas (MA\%, BA\%) estão dentro do intervalo válido
+$[0,100]$. O objetivo desta etapa é atestar a integridade de engenharia do ambiente, não medir robustez —
+essa é a função das execuções completas descritas na Seção 4.
+
+\begin{calloutbox}{Resultado da Validação}
+Executado em 2026-09-02 (GPU NVIDIA MX450, CUDA 12.1): \textbf{12/12 combinações ataque$\times$defesa
+concluídas sem exceções} em 16,2s, cobrindo as 9 defesas e 8 famílias de ataque implementadas — incluindo
+os casos mais complexos do ponto de vista de engenharia (SVD truncada do BOBA, bootstrap + inferência do
+classificador XGBoost do RAGNAR, histórico persistente do FoolsGold, branqueamento por covariância).
+Todas as métricas (MA\%, BA\%, precisão/revocação de detecção) ficaram dentro dos intervalos válidos. Os
+valores de MA\% observados (8--17\%) são baixos \textbf{por construção do teste} (2 rounds, $\sim$40
+amostras/cliente) e não devem ser lidos como medida de robustez — servem apenas para confirmar que o
+gradiente flui corretamente do dado ao modelo agregado em cada configuração. O log completo está em
+\texttt{results/smoke\_test\_log.txt}.
+\end{calloutbox}
+
+\section{Limitações e Trabalho Futuro}
+\begin{itemize}
+\item Implementar as Camadas Críticas de Backdoor (BC layers) e os ataques Layer-wise Poisoning (LP) /
+  Layer-wise Flipping (LF) descritos na Seção 3.3 da revisão, hoje mapeados mas não codificados.
+\item Reproduzir a mineração de amostras \textit{edge-case} reais (em vez do patch pixel-pattern) para
+  fidelidade completa ao ataque Edge-case PGD.
+\item Refinar a estimação dos vértices do simplex no BOBA via o procedimento de mínimos quadrados
+  restrito descrito no artigo original.
+\item Escalar o modelo (ex: ResNet18) e validar novamente em GPU com mais VRAM antes de comparações
+  quantitativas diretas com os números publicados na literatura (Figuras 1 e 2 da revisão).
+\item Executar a matriz completa de 13 cenários (escala real, não \textit{quick}) e consolidar os
+  resultados em um relatório comparativo — próximo entregável do ciclo.
+\end{itemize}
+
+\begin{thebibliography}{9}
+\bibitem{boba} Bao, Y. et al. \textit{BOBA: Byzantine-Robust Federated Learning with Label Skewness}. AISTATS, 2024.
+\bibitem{ragnar} Morais, M. et al. \textit{RAGNAR: Lightweight Defense against Poisoning Attacks in Federated LLMs and IoT}. COURB, 2024.
+\bibitem{multimetrics} \textit{Multi-metrics adaptively identifies backdoors in Federated learning}. SCUT, 2023.
+\end{thebibliography}
+
+\end{document}

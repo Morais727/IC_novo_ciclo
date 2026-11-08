@@ -1,0 +1,1073 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Barrando backdoors em camadas críticas</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400..700&display=swap"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"><style>
+*{box-sizing:border-box;margin:0} html,body{background:#0d1526;height:100%;overflow:hidden}
+#stage{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform-origin:center}
+section{position:absolute;inset:0;width:1920px;height:1080px;display:none;overflow:hidden}
+section.on{display:flex!important}
+table{border-collapse:collapse} th,td{padding:12px 16px;border-bottom:1px solid #E2DDD2;vertical-align:top}
+th{color:#14213D;border-bottom:2px solid #14213D} ol,ul{padding-left:1.2em}
+aside{display:none} body.notes section.on aside{display:block;position:absolute;left:0;right:0;bottom:0;background:rgba(13,21,38,.94);color:#F7F5F0;font:26px/1.45 'IBM Plex Sans',sans-serif;padding:28px 48px;z-index:9}
+#n{position:fixed;right:16px;bottom:10px;color:#8090b0;font:14px sans-serif}
+@media print{@page{size:1920px 1080px;margin:0} html,body{overflow:visible;height:auto;background:none} #stage{position:static;transform:none!important}
+section{position:relative;display:flex!important;page-break-after:always;break-after:page} aside,#n{display:none!important}}
+</style></head><body><div id="stage"><section id="cover" data-transition="fade" style="background:#14213D;color:#F7F5F0;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;justify-content:space-between">
+<div style="position:absolute;left:0;top:0;width:24px;height:1080px;background:#E07A45"></div>
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#F0A070;font-weight:600">H.IAAC · Meta 3 · Iniciação Científica · outubro de 2026</p>
+<div style="display:flex;flex-direction:column;gap:40px">
+<h1 style="font-family:'Source Serif 4', Georgia, serif;font-size:112px;font-weight:600;line-height:1.05;color:#F7F5F0;width:1500px">Barrando backdoors em camadas críticas</h1>
+<p style="font-size:40px;line-height:1.35;color:#C9D2E3;width:1400px">O que já temos pronto e como transformar o trabalho numa contribuição científica relevante</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<p style="font-size:30px;font-weight:600;color:#F7F5F0">Marcos Morais</p>
+<p style="font-size:26px;color:#C9D2E3">Orientador: Prof. Leandro A. Villas · UNICAMP</p>
+</div>
+<aside>Objetivo da conversa: mostrar o que os três primeiros entregáveis já produziram, o que eles revelam sobre o RAGNAR e propor uma direção para um artigo: barrar o ataque LP (Zhuang et al., ICLR 2024), que envenena só as camadas críticas, resolvendo também os problemas que a literatura revisada deixa abertos.</aside>
+</section>
+
+<section id="linha" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:56px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A9481A;font-weight:600">O que já temos</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">Três entregáveis concluídos, o quarto em andamento</h2>
+</div>
+<div style="display:flex;gap:32px;flex:1">
+<div style="flex:1;display:flex;flex-direction:column;gap:20px;background:#FFFDF9;border:1px solid #E2DDD2;border-top:8px solid #14213D;border-radius:12px;padding:36px">
+<p style="font-size:24px;font-weight:600;color:#A9481A;letter-spacing:2px">M1 · JULHO</p>
+<h3 style="font-family:'Source Serif 4', Georgia, serif;font-size:38px;font-weight:600;color:#14213D;line-height:1.15">Revisão e taxonomia</h3>
+<p style="font-size:26px;line-height:1.45">Revisão de ataques e defesas em FL, taxonomia por objetivo, canal de injeção e furtividade. Lacunas mapeadas, incluindo os ataques em camadas críticas.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:20px;background:#FFFDF9;border:1px solid #E2DDD2;border-top:8px solid #14213D;border-radius:12px;padding:36px">
+<p style="font-size:24px;font-weight:600;color:#A9481A;letter-spacing:2px">M2 · AGOSTO</p>
+<h3 style="font-family:'Source Serif 4', Georgia, serif;font-size:38px;font-weight:600;color:#14213D;line-height:1.15">Ambiente validado</h3>
+<p style="font-size:26px;line-height:1.45">fl-robustness-lab: CIFAR-10, CNN, 20 clientes, Dirichlet α = 0,5. Cenário de avaliação documentado e testes automatizados.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:20px;background:#FFFDF9;border:1px solid #E2DDD2;border-top:8px solid #14213D;border-radius:12px;padding:36px">
+<p style="font-size:24px;font-weight:600;color:#A9481A;letter-spacing:2px">M3 · SETEMBRO</p>
+<h3 style="font-family:'Source Serif 4', Georgia, serif;font-size:38px;font-weight:600;color:#14213D;line-height:1.15">Sinais e lógica de detecção</h3>
+<p style="font-size:26px;line-height:1.45">29 sinais com direção declarada a priori, regra de decisão sem treino e avaliação fora da amostra com 5 ataques novos.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:20px;background:#14213D;border:1px solid #14213D;border-top:8px solid #E07A45;border-radius:12px;padding:36px">
+<p style="font-size:24px;font-weight:600;color:#F0A070;letter-spacing:2px">M4 · OUTUBRO (AGORA)</p>
+<h3 style="font-family:'Source Serif 4', Georgia, serif;font-size:38px;font-weight:600;color:#F7F5F0;line-height:1.15">Ataques injetáveis</h3>
+<p style="font-size:26px;line-height:1.45;color:#C9D2E3">13 ataques implementados, 12 com efeito medido, entre eles o LP e o LF do artigo ICLR 2024.</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">02 · Plano de 12 meses, H.IAAC Meta 3 (jul/2026 a jun/2027)</p>
+<aside>Os três primeiros meses seguiram o plano. O M4 (ataques injetáveis) já está praticamente feito: falta o LP completo, a métrica de efeito do label flip e um Edge-case mais forte. Isso abre espaço para redirecionar o trabalho rumo a um artigo.</aside>
+</section>
+
+<section id="lab" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A9481A;font-weight:600">O que já temos</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">Um laboratório completo para testar defesas</h2>
+</div>
+<div style="display:flex;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:4px;border-left:6px solid #E07A45;padding:8px 0 8px 28px">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:96px;font-weight:600;color:#14213D;line-height:1.05">13</p>
+<p style="font-size:28px;font-weight:600;color:#14213D">ataques</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:4px;border-left:6px solid #E07A45;padding:8px 0 8px 28px">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:96px;font-weight:600;color:#14213D;line-height:1.05">10</p>
+<p style="font-size:28px;font-weight:600;color:#14213D">defesas</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:4px;border-left:6px solid #E07A45;padding:8px 0 8px 28px">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:96px;font-weight:600;color:#14213D;line-height:1.05">29</p>
+<p style="font-size:28px;font-weight:600;color:#14213D">sinais por cliente</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:4px;border-left:6px solid #E07A45;padding:8px 0 8px 28px">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:96px;font-weight:600;color:#14213D;line-height:1.05">72,8%</p>
+<p style="font-size:28px;font-weight:600;color:#14213D">acurácia sem ataque</p>
+</div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:32px">
+<div style="display:flex;flex-direction:column;gap:12px;background:#FFFDF9;border:1px solid #E2DDD2;border-radius:12px;padding:32px">
+<h3 style="font-size:28px;font-weight:600;color:#14213D">Envenenamento de modelo</h3>
+<p style="font-size:26px;line-height:1.45">Ruído gaussiano, IPM, LIE, MinMax, MinSum, Mimic, LF</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#FFFDF9;border:1px solid #E2DDD2;border-radius:12px;padding:32px">
+<h3 style="font-size:28px;font-weight:600;color:#14213D">Dados e backdoor</h3>
+<p style="font-size:26px;line-height:1.45">Label flip, backdoor por pixel, backdoor PGD, DBA, <b>LP</b>, Edge-case PGD</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#FFFDF9;border:1px solid #E2DDD2;border-radius:12px;padding:32px">
+<h3 style="font-size:28px;font-weight:600;color:#14213D">Defesas</h3>
+<p style="font-size:26px;line-height:1.45">FedAvg, Mediana, Média podada, Krum, Multi-Krum, FoolsGold, BOBA, Multi-métricas, RAGNAR v1, RAGNAR (CoUrb)</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">03 · fl-robustness-lab, com testes automatizados para os ataques recentes</p>
+<aside>Os 13 ataques cobrem as três famílias da taxonomia. Os 5 recentes (Mimic, DBA, LP, LF, Edge-case) foram implementados em 30/09. As 10 defesas incluem as que a literatura revisada propõe (BOBA, multi-métricas com whitening, FoolsGold) e as duas versões do RAGNAR.</aside>
+</section>
+
+<section id="ragnar" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A9481A;font-weight:600">O que aprendemos · 1</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">O RAGNAR v1 não generaliza para ataques que não viu</h2>
+</div>
+<div style="display:flex;gap:56px;align-items:start">
+<table style="width:1000px;font-size:28px;color:#2A3346">
+<tr><th style="width:30%;text-align:left">Ataque</th><th style="width:17%;text-align:right">MA FedAvg</th><th style="width:17%;text-align:right">MA RAGNAR</th><th style="width:18%;text-align:right">ASR FedAvg</th><th style="width:18%;text-align:right">ASR RAGNAR</th></tr>
+<tr><td>Backdoor pixel</td><td style="text-align:right">72,5%</td><td style="text-align:right">57,2%</td><td style="text-align:right">75,4%</td><td style="text-align:right">93,8%</td></tr>
+<tr><td>Backdoor PGD</td><td style="text-align:right">72,9%</td><td style="text-align:right">58,4%</td><td style="text-align:right">66,3%</td><td style="text-align:right">80,5%</td></tr>
+<tr><td>LIE</td><td style="text-align:right">70,6%</td><td style="text-align:right">70,0%</td><td style="text-align:right">–</td><td style="text-align:right">–</td></tr>
+<tr><td>MinMax</td><td style="text-align:right">68,9%</td><td style="text-align:right">63,6%</td><td style="text-align:right">–</td><td style="text-align:right">–</td></tr>
+<tr><td>MinSum</td><td style="text-align:right">68,9%</td><td style="text-align:right">63,9%</td><td style="text-align:right">–</td><td style="text-align:right">–</td></tr>
+</table>
+<div style="flex:1;display:flex;flex-direction:column;gap:28px">
+<div style="display:flex;flex-direction:column;gap:10px;background:#14213D;border-radius:12px;padding:32px">
+<p style="font-size:28px;line-height:1.4;color:#F7F5F0"><b>Recall 0</b> nos ataques de modelo.</p>
+<p style="font-size:28px;line-height:1.4;color:#F7F5F0">Nos backdoors, exclui metade dos honestos e o backdoor fica <span style="color:#F0A070"><b>mais forte</b></span>.</p>
+</div>
+<p style="font-size:26px;line-height:1.45">Causa medida: features absolutas, lidas numa só direção, num classificador treinado numa fase do treino e aplicado em outra.</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">04 · Braço “não visto”: a família do ataque fica fora do treino do XGBoost. 40 rounds, semente 42. MA = acurácia principal; ASR = sucesso do backdoor</p>
+<aside>Este é o ponto de partida honesto: o RAGNAR, como está, não protege contra ataque fora do treino. Mesmo com todos os ataques no treino (braço pool_todos), a acurácia final ficou abaixo do FedAvg sem defesa. O M3 mediu por quê: no backdoor por pixel, cos_mean tem AUC 0,21 nos rounds 2 a 7 e 0,87 nos rounds 8 a 15, então a regra aprendida no início se inverte depois.</aside>
+</section>
+
+<section id="sinais" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A9481A;font-weight:600">O que aprendemos · 2</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">Nenhum sinal isolado cobre todos os ataques</h2>
+</div>
+<table style="width:1664px;font-size:27px;color:#2A3346">
+<tr><th style="width:23%;text-align:left">Sinal (AUC)</th><th style="width:11%;text-align:right">IPM</th><th style="width:11%;text-align:right">LIE</th><th style="width:11%;text-align:right">MinMax</th><th style="width:11%;text-align:right">Mimic</th><th style="width:11%;text-align:right">LF</th><th style="width:11%;text-align:right">LP</th><th style="width:11%;text-align:right">Edge</th></tr>
+<tr><td>norma ↑</td><td style="text-align:right;color:#A9481A"><b>0,01</b></td><td style="text-align:right">0,99</td><td style="text-align:right">0,97</td><td style="text-align:right">0,97</td><td style="text-align:right;color:#A9481A"><b>0,41</b></td><td style="text-align:right">0,86</td><td style="text-align:right;color:#A9481A"><b>0,46</b></td></tr>
+<tr><td>cosseno à mediana ↓</td><td style="text-align:right">1,00</td><td style="text-align:right;color:#A9481A"><b>0,00</b></td><td style="text-align:right;color:#A9481A"><b>0,00</b></td><td style="text-align:right;color:#A9481A"><b>0,03</b></td><td style="text-align:right">0,85</td><td style="text-align:right">0,88</td><td style="text-align:right">0,96</td></tr>
+<tr><td>Mahalanobis ↑</td><td style="text-align:right">0,81</td><td style="text-align:right">0,74</td><td style="text-align:right">0,78</td><td style="text-align:right">0,52</td><td style="text-align:right">0,76</td><td style="text-align:right">0,95</td><td style="text-align:right">0,84</td></tr>
+<tr><td>perda no holdout ↑</td><td style="text-align:right;color:#A9481A"><b>0,02</b></td><td style="text-align:right">1,00</td><td style="text-align:right;color:#A9481A"><b>0,35</b></td><td style="text-align:right">0,52</td><td style="text-align:right;color:#A9481A"><b>0,36</b></td><td style="text-align:right">0,54</td><td style="text-align:right">1,00</td></tr>
+<tr><td>conluio (max cos) ↑</td><td style="text-align:right">1,00</td><td style="text-align:right">1,00</td><td style="text-align:right">1,00</td><td style="text-align:right">0,97</td><td style="text-align:right;color:#A9481A"><b>0,07</b></td><td style="text-align:right">0,82</td><td style="text-align:right">0,99</td></tr>
+<tr><td>fc1, dist. à mediana ↑</td><td style="text-align:right;color:#A9481A"><b>0,10</b></td><td style="text-align:right">0,98</td><td style="text-align:right;color:#A9481A"><b>0,48</b></td><td style="text-align:right">0,63</td><td style="text-align:right">0,53</td><td style="text-align:right">0,97</td><td style="text-align:right;color:#A9481A"><b>0,45</b></td></tr>
+</table>
+<div style="display:flex;gap:32px">
+<div style="flex:1;border-left:6px solid #E07A45;padding:4px 0 4px 24px">
+<p style="font-size:26px;line-height:1.45"><b>Ataques de modelo se escondem no centro:</b> LIE, MinMax e MinSum ficam <i>mais</i> alinhados à mediana que um honesto típico. Cossenos precisam ser lidos nos dois sentidos.</p>
+</div>
+<div style="flex:1;border-left:6px solid #2B5C9E;padding:4px 0 4px 24px">
+<p style="font-size:26px;line-height:1.45"><b>Cada ataque recente escapa de uma família diferente.</b> Um detector precisa combinar geometria, holdout, histórico e camada crítica.</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">05 · AUC por round na direção declarada a priori (↑ ou ↓). Em laranja e negrito: abaixo de 0,5, o ataque inverte o sinal. 15 rounds, agregação oráculo</p>
+<aside>A correção feita no M3 importa aqui: antes reportávamos max(AUC, 1−AUC), que escolhe a direção depois de ver o dado. Na direção declarada, só Mahalanobis fica acima de 0,5 em todos os 13 ataques (pior caso 0,52, no Mimic). Para o LP, os sinais que funcionam são os de norma e dispersão, especialmente na fc1 (0,97); o holdout limpo não vê o backdoor (0,54).</aside>
+</section>
+
+<section id="regra" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A9481A;font-weight:600">O que aprendemos · 3</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">A regra sem treino detecta mais que o RAGNAR, também fora da amostra</h2>
+</div>
+<div style="display:flex;gap:56px;align-items:start">
+<table style="width:1080px;font-size:28px;color:#2A3346">
+<tr><th style="width:40%;text-align:left">Regra</th><th style="width:20%;text-align:right">AUC</th><th style="width:20%;text-align:right">Recall</th><th style="width:20%;text-align:right">Falsos pos.</th></tr>
+<tr style="background:#ECE8DF"><td><b>8 ataques do desenho</b></td><td></td><td></td><td></td></tr>
+<tr><td>Mesma regra, 4 features RAGNAR</td><td style="text-align:right">0,78</td><td style="text-align:right">0,37</td><td style="text-align:right">5%</td></tr>
+<tr><td><b>Proposta</b></td><td style="text-align:right"><b>0,95</b></td><td style="text-align:right"><b>0,86</b></td><td style="text-align:right">9%</td></tr>
+<tr style="background:#ECE8DF"><td><b>5 ataques novos (fora da amostra)</b></td><td></td><td></td><td></td></tr>
+<tr><td>Mesma regra, 4 features RAGNAR</td><td style="text-align:right">0,70</td><td style="text-align:right">0,34</td><td style="text-align:right">9%</td></tr>
+<tr><td><b>Proposta</b></td><td style="text-align:right"><b>0,88</b></td><td style="text-align:right"><b>0,72</b></td><td style="text-align:right">15%</td></tr>
+<tr><td>Proposta + sinais de conluio</td><td style="text-align:right">0,93</td><td style="text-align:right">0,85</td><td style="text-align:right">15%</td></tr>
+</table>
+<div style="flex:1;display:flex;flex-direction:column;gap:24px">
+<h3 style="font-size:30px;font-weight:600;color:#14213D">Como a regra decide</h3>
+<ol style="font-size:26px;line-height:1.45;color:#3D4657">
+<li>z robusto de cada sinal dentro do round (mediana e MAD)</li>
+<li>evidência uni ou bilateral, fixada por sinal</li>
+<li>escore = máximo das evidências; o sinal vencedor é a explicação</li>
+<li>exclui se escore &gt; 3, no máximo metade dos clientes</li>
+</ol>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">06 · experiments/detection_logic.py sobre os sinais coletados; recall e FP por par (cliente, round). Regra congelada antes dos 5 ataques novos existirem</p>
+<aside>O ganho maior está onde o RAGNAR-4 não via nada: LIE, MinMax e MinSum (recall 0 para 0,87 a 0,93) e backdoor PGD (0,10 para 1,00). Fora da amostra a proposta cai de 0,95 para 0,88 de AUC: essa queda mostra quanto do número do desenho vinha de a regra ter sido feita com os mesmos dados. Os falsos positivos de 15% são o ponto fraco.</aside>
+</section>
+
+<section id="limites" data-transition="fade" style="background:#ECE8DF;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A9481A;font-weight:600">O que aprendemos · 4</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">O que esses números ainda não provam</h2>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:28px">
+<div style="display:flex;flex-direction:column;gap:12px;background:#F7F5F0;border-radius:12px;padding:32px">
+<h3 style="font-size:30px;font-weight:600;color:#14213D">Agregação oráculo</h3>
+<p style="font-size:26px;line-height:1.45">O filtro mede, mas não age: não há efeito da exclusão sobre o modelo seguinte.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#F7F5F0;border-radius:12px;padding:32px">
+<h3 style="font-size:30px;font-weight:600;color:#14213D">Pouca variação</h3>
+<p style="font-size:26px;line-height:1.45">15 rounds, uma semente, um cenário (α = 0,5). Sem estimativa de variância.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#F7F5F0;border-radius:12px;padding:32px">
+<h3 style="font-size:30px;font-weight:600;color:#14213D">Falsos positivos</h3>
+<p style="font-size:26px;line-height:1.45">15% fora da amostra com limiar fixo. O Mimic chega a 29%.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#F7F5F0;border-radius:12px;padding:32px;border:3px solid #E07A45">
+<h3 style="font-size:30px;font-weight:600;color:#14213D">LP incompleto</h3>
+<p style="font-size:26px;line-height:1.45">Sem λ adaptativo e sem modelo médio, justamente o que no artigo leva a aceitação de 51% para 93%.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#F7F5F0;border-radius:12px;padding:32px">
+<h3 style="font-size:30px;font-weight:600;color:#14213D">Label flip</h3>
+<p style="font-size:26px;line-height:1.45">Ainda sem sinal confiável: recall 0,33 e nenhuma métrica de efeito.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#F7F5F0;border-radius:12px;padding:32px">
+<h3 style="font-size:30px;font-weight:600;color:#14213D">Sem atacante adaptativo</h3>
+<p style="font-size:26px;line-height:1.45">Nenhum ataque conhece o detector. Os sinais de conluio seriam os primeiros a cair.</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">07 · Evidência de viabilidade, não validação</p>
+<aside>Esta é a lista que um revisor faria. O item em destaque, o LP incompleto, é o que mais pesa para a direção que vou propor: hoje detectamos a versão fácil do ataque. A versão do artigo calibra λ e se aproxima da média dos benignos, e é contra ela que a defesa precisa ser medida.</aside>
+</section>
+
+<section id="lpcomo" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A9481A;font-weight:600">O alvo · ataque LP (Zhuang et al., ICLR 2024)</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">O LP envenena só as camadas que carregam o backdoor</h2>
+</div>
+<div style="display:flex;gap:20px;align-items:center">
+<div style="flex:1;align-self:stretch;display:flex;flex-direction:column;gap:12px;background:#FFFDF9;border:1px solid #E2DDD2;border-radius:12px;padding:28px">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:44px;font-weight:600;color:#E07A45">1</p>
+<h3 style="font-size:28px;font-weight:600;color:#14213D">Dois modelos locais</h3>
+<p style="font-size:24px;line-height:1.45">Treina um modelo limpo e um com o gatilho.</p>
+</div>
+<div style="background:#B8B2A6;width:44px;height:24px;background:none;display:flex;align-items:center;justify-content:center;font-size:44px;color:#B8B2A6;flex:none">→</div>
+<div style="flex:1;align-self:stretch;display:flex;flex-direction:column;gap:12px;background:#FFFDF9;border:1px solid #E2DDD2;border-radius:12px;padding:28px">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:44px;font-weight:600;color:#E07A45">2</p>
+<h3 style="font-size:28px;font-weight:600;color:#14213D">Substituição de camadas</h3>
+<p style="font-size:24px;line-height:1.45">Troca camadas entre os dois e mede o sucesso do backdoor. Acha o conjunto L* de camadas críticas.</p>
+</div>
+<div style="background:#B8B2A6;width:44px;height:24px;background:none;display:flex;align-items:center;justify-content:center;font-size:44px;color:#B8B2A6;flex:none">→</div>
+<div style="flex:1;align-self:stretch;display:flex;flex-direction:column;gap:12px;background:#FFFDF9;border:1px solid #E2DDD2;border-radius:12px;padding:28px">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:44px;font-weight:600;color:#E07A45">3</p>
+<h3 style="font-size:28px;font-weight:600;color:#14213D">Atualização híbrida</h3>
+<p style="font-size:24px;line-height:1.45">Camadas de L* envenenadas; o resto vem da média dos modelos benignos. λ regula a furtividade.</p>
+</div>
+<div style="background:#B8B2A6;width:44px;height:24px;background:none;display:flex;align-items:center;justify-content:center;font-size:44px;color:#B8B2A6;flex:none">→</div>
+<div style="flex:1;align-self:stretch;display:flex;flex-direction:column;gap:12px;background:#FFFDF9;border:1px solid #E2DDD2;border-radius:12px;padding:28px">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:44px;font-weight:600;color:#E07A45">4</p>
+<h3 style="font-size:28px;font-weight:600;color:#14213D">Controle adaptativo</h3>
+<p style="font-size:24px;line-height:1.45">Simula a defesa do servidor. Se for rejeitado, tira camadas de L* e tenta de novo.</p>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#14213D;border-radius:12px;padding:32px 40px">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:34px;color:#F7F5F0">w̃ = λ·v∘u_mal + ReLU(1 − λ)·v∘u_méd + (1 − v)∘u_méd</p>
+<p style="font-size:24px;line-height:1.4;color:#C9D2E3">v marca as camadas de L*; u_mal é o modelo envenenado; u_méd é a média dos benignos locais. Variante LF: inverte o sinal das camadas de L* para enganar defesas por sinal (RLR).</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">08 · Zhuang et al., “Backdoor Federated Learning by Poisoning Backdoor-Critical Layers”, ICLR 2024, Eq. 4</p>
+<aside>A ideia central do artigo: o backdoor está concentrado num pequeno subconjunto de camadas, as BC layers. Na nossa CNN, quase sempre fc1 e a última convolução; em ResNet18 e VGG19, as camadas lineares e convoluções profundas. Envenenando só essas camadas, a distância para os benignos fica pequena nas demais e as defesas que olham o modelo inteiro não veem o ataque.</aside>
+</section>
+
+<section id="lpfura" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A9481A;font-weight:600">O alvo · resultados do artigo</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">O LP passa pelas defesas que barram os backdoors clássicos</h2>
+</div>
+<div style="display:flex;gap:56px;align-items:start">
+<table style="width:940px;font-size:28px;color:#2A3346">
+<tr><th style="width:34%;text-align:left">Defesa</th><th style="width:22%;text-align:right">BadNets</th><th style="width:22%;text-align:right">DBA</th><th style="width:22%;text-align:right">LP</th></tr>
+<tr><td>FedAvg</td><td style="text-align:right">70,5</td><td style="text-align:right">10,9</td><td style="text-align:right"><b>89,1</b></td></tr>
+<tr><td>FLTrust</td><td style="text-align:right">75,8</td><td style="text-align:right">15,1</td><td style="text-align:right"><b>71,5</b></td></tr>
+<tr><td>FLAME</td><td style="text-align:right">7,2</td><td style="text-align:right">3,9</td><td style="text-align:right"><b>90,2</b></td></tr>
+<tr><td>Multi-Krum</td><td style="text-align:right">4,0</td><td style="text-align:right">5,6</td><td style="text-align:right"><b>90,1</b></td></tr>
+<tr><td>FLDetector</td><td style="text-align:right">5,2</td><td style="text-align:right">5,9</td><td style="text-align:right"><b>86,6</b></td></tr>
+<tr><td>RLR</td><td style="text-align:right">60,8</td><td style="text-align:right">7,8</td><td style="text-align:right"><b>82,1</b></td></tr>
+<tr><td>FLARE</td><td style="text-align:right">6,2</td><td style="text-align:right">6,6</td><td style="text-align:right"><b>53,7</b></td></tr>
+</table>
+<div style="flex:1;display:flex;flex-direction:column;gap:28px">
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px">
+<p style="font-size:26px;line-height:1.45"><b>Só 10% de clientes maliciosos.</b> Modelo médio e controle adaptativo elevam a aceitação dos maliciosos de 51% para 93%.</p>
+</div>
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px">
+<p style="font-size:26px;line-height:1.45"><b>Defesa por camada não basta.</b> Multi-Krum aplicado camada a camada ainda deixa até 94% de sucesso: a camada linear se destaca, as convoluções críticas quase não desviam.</p>
+</div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">09 · Sucesso médio do backdoor (%), ResNet18, CIFAR-10 não-IID, média de 5 execuções (Zhuang et al., 2024, Tab. 2, Tab. 4 e Apêndice §14)</p>
+<aside>A tabela mostra o problema: FLAME e Multi-Krum derrubam o BadNets e o DBA para menos de 8%, mas o LP passa com 90%. O Apêndice 14 é o mais relevante para nós: os próprios autores tentaram uma defesa por camada (Multi-Krum por camada) e ela falhou, porque o desvio nas convoluções críticas é pequeno quando medido isoladamente. Qualquer proposta nossa tem que responder a esse experimento.</aside>
+</section>
+
+<section id="lplab" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A9481A;font-weight:600">O alvo · no nosso laboratório</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">Nosso LP já funciona e já é parcialmente visível</h2>
+</div>
+<div style="display:flex;gap:56px;align-items:start">
+<div style="width:700px;display:flex;flex-direction:column;gap:32px">
+<div style="display:flex;gap:32px">
+<div style="flex:1;border-left:6px solid #E07A45;padding:4px 0 4px 24px">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:80px;font-weight:600;color:#14213D;line-height:1.05">50%</p>
+<p style="font-size:24px">sucesso do backdoor (base 2,5%)</p>
+</div>
+<div style="flex:1;border-left:6px solid #E07A45;padding:4px 0 4px 24px">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:80px;font-weight:600;color:#14213D;line-height:1.05">−0,2</p>
+<p style="font-size:24px">p.p. de acurácia: furtivo</p>
+</div>
+</div>
+<p style="font-size:26px;line-height:1.45">Camadas críticas escolhidas: <b>fc1</b> e <b>conv3</b> (64 e 61 de 80 escolhas), o mesmo padrão do artigo.</p>
+<p style="font-size:26px;line-height:1.45">Detecção: proposta com recall <b>0,77</b> e 13% de FP; RAGNAR-4 com recall 0,43.</p>
+</div>
+<table style="flex:1;font-size:28px;color:#2A3346">
+<tr><th style="width:70%;text-align:left">Sinal no LP</th><th style="width:30%;text-align:right">AUC</th></tr>
+<tr><td>fc1, distância à mediana</td><td style="text-align:right"><b>0,97</b></td></tr>
+<tr><td>Mahalanobis</td><td style="text-align:right"><b>0,95</b></td></tr>
+<tr><td>norma L3 à média</td><td style="text-align:right">0,94</td></tr>
+<tr><td>cosseno à mediana</td><td style="text-align:right">0,88</td></tr>
+<tr><td>perda no holdout limpo</td><td style="text-align:right;color:#A9481A"><b>0,54</b></td></tr>
+</table>
+</div>
+<div style="display:flex;gap:20px;align-items:center;background:#14213D;border-radius:12px;padding:28px 36px">
+<span style="color:#F0A070;width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;font-size:34px;flex:none">⚠</span>
+<p style="font-size:26px;line-height:1.4;color:#F7F5F0">Ressalva: sem λ e sem modelo médio, este é o LP mais fácil de pegar. O holdout limpo não vê o backdoor (0,54).</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">10 · FedAvg, 40 rounds (efeito) e 15 rounds com agregação oráculo (sinais), 2 atacantes em 20, semente 42</p>
+<aside>Dois pontos. Primeiro, o fato de a distância na fc1 separar o LP (0,97) é exatamente o que o artigo previa: a camada linear se destaca. Segundo, o holdout limpo não ajuda contra backdoor, porque o modelo envenenado continua acertando imagens sem gatilho. Isso motiva uma sonda no servidor que não dependa de conhecer o gatilho.</aside>
+</section>
+
+<section id="problemas" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:44px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A9481A;font-weight:600">Problemas abertos · artigos revisados</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">Sete problemas que a defesa precisa resolver</h2>
+</div>
+<table style="width:1664px;font-size:26px;color:#2A3346">
+<tr><th style="width:42%;text-align:left">Problema</th><th style="width:24%;text-align:left">Onde aparece</th><th style="width:34%;text-align:left">O que exige da defesa</th></tr>
+<tr><td>Heterogeneidade faz honestos parecerem atacantes</td><td>BOBA, Blades</td><td>FP medido sob não-IID severo</td></tr>
+<tr><td>Uma métrica só falha em alta dimensão</td><td>Multi-métricas; nosso M3</td><td>combinar famílias de sinais</td></tr>
+<tr><td>Robustez superestimada sem atacante adaptativo</td><td>Blades; LP, Apêndice 14</td><td>testar contra quem conhece a defesa</td></tr>
+<tr><td>Detector supervisionado não generaliza</td><td>RAGNAR v1: recall 0</td><td>nada de treino com ataques</td></tr>
+<tr><td>Descarte binário pune caro cada falso positivo</td><td>FLGuard, DF-PAR</td><td>resposta graduada e memória</td></tr>
+<tr><td>Decisões opacas, injustas com clientes fracos</td><td>XI-DDaBA, Trustworthy FL</td><td>explicar cada exclusão</td></tr>
+<tr><td>Holdout limpo não enxerga backdoor</td><td>FLTrust; nosso M3: 0,54</td><td>sonda que não dependa do gatilho</td></tr>
+</table>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">11 · Fontes em IC/artigos e na revisão do entregável 01</p>
+<aside>Cada linha liga um problema da literatura a um requisito concreto. BOBA e Blades mostram que, sob label skew, honestos variam tanto em norma e direção que defesas geométricas os descartam. O Multi-métricas mostra que uma distância só perde força. O Blades e o próprio Apêndice 14 do LP mostram que avaliar sem atacante adaptativo superestima a defesa. FLGuard e DF-PAR trocam o descarte binário por confiança contínua e histórica. XI-DDaBA cobra explicação e imparcialidade. E o nosso próprio RAGNAR mostra o limite do classificador supervisionado.</aside>
+</section>
+
+<section id="tese" data-transition="fade" style="background:#A9481A;color:#FBF3EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;justify-content:center;gap:48px">
+<p style="font-size:26px;letter-spacing:3px;text-transform:uppercase;color:#FBE3D3;font-weight:600">Pergunta de pesquisa</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:68px;font-weight:500;line-height:1.2;color:#FBF3EC;width:1600px">Um backdoor escondido em poucas camadas deixa uma <i>assinatura de concentração</i>. O servidor consegue achá-la camada a camada, sem treinar com ataques e sem confundir heterogeneidade honesta com ataque?</h2>
+<p style="font-size:30px;line-height:1.45;color:#FBE3D3;width:1500px">Se sim, o atacante fica num dilema: concentrar o veneno e ser visto pelo perfil de camadas, ou espalhá-lo e ser visto pelas normas.</p>
+<aside>Esta é a tese que proponho para o artigo. Ela inverte a lógica do LP: o atacante usa a análise de substituição de camadas para se esconder; o defensor usa um perfil por camada para procurar exatamente o que torna o LP eficaz, a concentração do envenenamento. A segunda metade da pergunta responde ao BOBA: um honesto com dados enviesados também desvia, mas de outro jeito.</aside>
+</section>
+
+<section id="arquitetura" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A9481A;font-weight:600">A proposta</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">Seis componentes, uma decisão por camada</h2>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:28px">
+<div style="display:flex;flex-direction:column;gap:12px;background:#FFFDF9;border:1px solid #E2DDD2;border-top:6px solid #2B5C9E;border-radius:12px;padding:28px">
+<h3 style="font-size:30px;font-weight:600;color:#14213D">1 · Perfil por camada</h3>
+<p style="font-size:24px;line-height:1.45">z robusto de cada sinal, em cada camada, dentro do round. Gera uma matriz camadas × sinais por cliente.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#FFFDF9;border:1px solid #E2DDD2;border-top:6px solid #E07A45;border-radius:12px;padding:28px">
+<h3 style="font-size:30px;font-weight:600;color:#14213D">2 · Concentração</h3>
+<p style="font-size:24px;line-height:1.45">Quanto do desvio do cliente cabe em poucas camadas. O LP concentra; a variação honesta se espalha.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#FFFDF9;border:1px solid #E2DDD2;border-top:6px solid #2B5C9E;border-radius:12px;padding:28px">
+<h3 style="font-size:30px;font-weight:600;color:#14213D">3 · Heterogeneidade</h3>
+<p style="font-size:24px;line-height:1.45">Desconta o desvio explicado pela distribuição de rótulos (subespaço honesto, como no BOBA) antes de acusar.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#FFFDF9;border:1px solid #E2DDD2;border-top:6px solid #E07A45;border-radius:12px;padding:28px">
+<h3 style="font-size:30px;font-weight:600;color:#14213D">4 · Sonda sem gatilho</h3>
+<p style="font-size:24px;line-height:1.45">No holdout, aplica manchas aleatórias: a atualização torna o modelo sensível a padrões pequenos rumo a uma classe?</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#FFFDF9;border:1px solid #E2DDD2;border-top:6px solid #2B5C9E;border-radius:12px;padding:28px">
+<h3 style="font-size:30px;font-weight:600;color:#14213D">5 · Memória</h3>
+<p style="font-size:24px;line-height:1.45">CUSUM ou reputação: o LP precisa repetir o envenenamento para o backdoor não decair.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#14213D;border:1px solid #14213D;border-top:6px solid #E07A45;border-radius:12px;padding:28px">
+<h3 style="font-size:30px;font-weight:600;color:#F7F5F0">6 · Resposta cirúrgica</h3>
+<p style="font-size:24px;line-height:1.45;color:#C9D2E3">Anula só as camadas suspeitas e explica: “cliente 7, conv3, distância à mediana com z = 5,1”.</p>
+</div>
+</div>
+<p style="font-size:26px;line-height:1.4;color:#3D4657"><b>Entra:</b> atualizações do round, modelo global, holdout de 100 amostras, histórico. <b>Sai:</b> aceitar, anular camadas ou excluir, com a explicação.</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">13 · Evolução da regra do M3: mesma normalização no round, agora com resolução de camada. O exemplo de explicação é ilustrativo</p>
+<aside>Os componentes 1 e 5 já existem em parte no M3 (z robusto, CUSUM). O novo está em 2, 3, 4 e 6. O componente 2 responde ao Apêndice 14 do LP: o Multi-Krum por camada olha uma camada de cada vez e cada convolução crítica desvia pouco; a concentração olha o padrão conjunto. O 6 reduz o custo de um falso positivo: um honesto marcado perde só a camada suspeita naquele round, não a contribuição inteira.</aside>
+</section>
+
+<section id="mapa" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:44px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A9481A;font-weight:600">A proposta</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">Cada componente responde a um problema aberto</h2>
+</div>
+<table style="width:1664px;font-size:26px;color:#2A3346">
+<tr><th style="width:36%;text-align:left">Componente</th><th style="width:40%;text-align:left">Problema que resolve</th><th style="width:24%;text-align:left">Referência</th></tr>
+<tr><td>Perfil por camada + concentração</td><td>métrica única falha; Multi-Krum por camada não basta</td><td>Multi-métricas; LP §14</td></tr>
+<tr><td>Referência de heterogeneidade</td><td>honestos não-IID parecem atacantes</td><td>BOBA, Blades</td></tr>
+<tr><td>Regra sem treino, z no round</td><td>detector supervisionado não generaliza</td><td>RAGNAR v1</td></tr>
+<tr><td>Sonda sem gatilho</td><td>holdout limpo não enxerga backdoor</td><td>FLTrust; M3</td></tr>
+<tr><td>Memória + resposta cirúrgica</td><td>descarte binário pune caro cada FP</td><td>FLGuard, DF-PAR</td></tr>
+<tr><td>Explicação por camada</td><td>decisões opacas e injustas</td><td>XI-DDaBA</td></tr>
+<tr><td>Avaliação com LP adaptativo</td><td>robustez superestimada</td><td>Blades</td></tr>
+</table>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">14 · Um componente que não melhorar o resultado na ablação sai da proposta</p>
+<aside>Este slide amarra a proposta à literatura. A última linha não é um componente da defesa, é do protocolo: sem atacante adaptativo, qualquer número de detecção é otimista, como o Blades mostrou para Krum e Média podada. A regra de ablação no rodapé evita uma defesa com peças demais.</aside>
+</section>
+
+<section id="hipoteses" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:44px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A9481A;font-weight:600">A proposta</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">Quatro hipóteses, cada uma com critério de refutação</h2>
+</div>
+<table style="width:1664px;font-size:24px;color:#2A3346">
+<tr><th style="width:40%;text-align:left">Hipótese</th><th style="width:22%;text-align:left">Refutada se</th><th style="width:15%;text-align:left">Custo</th><th style="width:23%;text-align:left">Resultado (12/10)</th></tr>
+<tr><td><b>H1 · Concentração.</b> O desvio do LP cabe em até 2 camadas; o de honestos não-IID, não.</td><td>AUC do escore de concentração abaixo de 0,8</td><td>~10 min de GPU</td><td><b>Sustentada com α = 0,5</b> (0,94); falha com α = 0,1 (0,40)</td></tr>
+<tr><td><b>H2 · Heterogeneidade.</b> Descontar o subespaço de rótulos reduz o FP em α = 0,1 sem perder recall.</td><td>FP não cai, ou recall cai mais de 5 p.p.</td><td>mesma coleta</td><td><b>Refutada</b> como testada</td></tr>
+<tr><td><b>H3 · Sonda.</b> Manchas aleatórias no holdout separam LP, DBA e pixel, que o holdout limpo não separa.</td><td>AUC da sonda até 0,7</td><td>n inferências por round</td><td><b>Refutada</b> (0,44); com o gatilho real, 0,83</td></tr>
+<tr><td><b>H4 · Dilema.</b> Contra o LP adaptativo, escapar da defesa custa sucesso ao backdoor.</td><td>ASR adaptativo igual ao sem defesa</td><td>M10</td><td>não testada</td></tr>
+</table>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">15 · Critérios fixados antes de rodar, como no M3. Custos supõem ~12 s por round na MX450</p>
+<aside>H1 é a mais barata e a mais decisiva: se o desvio de honestos com α = 0,1 também se concentrar numa camada (provavelmente a de saída, por causa do desbalanceamento de rótulos), a tese depende de H2. Por isso H1 e H2 usam a mesma coleta. H3 é a aposta mais arriscada. H4 é o resultado que dá relevância ao artigo.</aside>
+</section>
+
+<section id="tradeoff" data-transition="fade" style="background:#14213D;color:#C9D2E3;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#F0A070;font-weight:600">O resultado central</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#F7F5F0">Encurralar o atacante adaptativo</h2>
+</div>
+<div style="display:flex;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;background:#1E2E52;border-radius:12px;padding:36px">
+<h3 style="font-size:32px;font-weight:600;color:#F7F5F0">Concentrar</h3>
+<p style="font-size:26px;line-height:1.45">Poucas camadas, λ alto. Visto pela concentração e pelo perfil por camada.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;background:#1E2E52;border-radius:12px;padding:36px">
+<h3 style="font-size:32px;font-weight:600;color:#F7F5F0">Espalhar</h3>
+<p style="font-size:26px;line-height:1.45">Muitas camadas. Visto pelas normas e pelo Mahalanobis, que já dão 0,95 contra o LP atual.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;background:#1E2E52;border-radius:12px;padding:36px">
+<h3 style="font-size:32px;font-weight:600;color:#F7F5F0">Diluir</h3>
+<p style="font-size:26px;line-height:1.45">λ baixo. Pode passar, mas o backdoor enfraquece. Na CNN do artigo, λ acima de 0,6 já é pego pelo FLAME.</p>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;border-left:6px solid #E07A45;padding:8px 0 8px 32px">
+<p style="font-size:30px;line-height:1.45;color:#F7F5F0"><b>Figura principal do artigo:</b> sucesso do backdoor × aceitação dos maliciosos, varrendo λ e o tamanho de L*, para cada defesa.</p>
+<p style="font-size:26px;line-height:1.45">Meta: nenhuma configuração do LP no canto “aceito e eficaz”.</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#9AA6BF">16 · λ: Zhuang et al., 2024, §5.4 (melhor λ = 0,5 na CNN; detectado acima de 0,6 no FLAME e de 0,7 no Multi-Krum)</p>
+<aside>É isso que separa um trabalho incremental de um relevante: não basta mostrar que detectamos o LP como ele é publicado. É preciso mostrar que, mesmo sabendo da defesa, o atacante não encontra um ponto de operação que seja ao mesmo tempo aceito e eficaz. O artigo do LP já dá a régua: com FLAME, o limite é λ de 0,6 na CNN. Se a nossa defesa baixar esse limite a ponto de o backdoor não funcionar, temos o resultado.</aside>
+</section>
+
+<section id="protocolo" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A9481A;font-weight:600">Para ser publicável</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">O protocolo que um revisor vai exigir</h2>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:28px 64px">
+<div style="display:flex;gap:20px;align-items:start">
+<span style="color:#2B5C9E;width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;font-size:34px;flex:none">✔</span>
+<p style="font-size:27px;line-height:1.45"><b>Agregação real:</b> o filtro age sobre o treino desde o round 1, sem oráculo.</p>
+</div>
+<div style="display:flex;gap:20px;align-items:start">
+<span style="color:#2B5C9E;width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;font-size:34px;flex:none">✔</span>
+<p style="font-size:27px;line-height:1.45"><b>O LP real:</b> λ, modelo médio e controle adaptativo, conferidos com o código dos autores.</p>
+</div>
+<div style="display:flex;gap:20px;align-items:start">
+<span style="color:#2B5C9E;width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;font-size:34px;flex:none">✔</span>
+<p style="font-size:27px;line-height:1.45"><b>No terreno dos autores:</b> o repositório do LP já traz FLAME, Multi-Krum, FLTrust, FLDetector, RLR e FLARE.</p>
+</div>
+<div style="display:flex;gap:20px;align-items:start">
+<span style="color:#2B5C9E;width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;font-size:34px;flex:none">✔</span>
+<p style="font-size:27px;line-height:1.45"><b>Modelos que cabem na MX450:</b> CNN em Fashion-MNIST e ResNet20 em CIFAR-10.</p>
+</div>
+<div style="display:flex;gap:20px;align-items:start">
+<span style="color:#2B5C9E;width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;font-size:34px;flex:none">✔</span>
+<p style="font-size:27px;line-height:1.45"><b>Não-IID moderado e severo:</b> α = 0,5 e α = 0,1.</p>
+</div>
+<div style="display:flex;gap:20px;align-items:start">
+<span style="color:#2B5C9E;width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;font-size:34px;flex:none">✔</span>
+<p style="font-size:27px;line-height:1.45"><b>Métricas:</b> sucesso do backdoor, acurácia, aceitação de maliciosos e de honestos, custo por round.</p>
+</div>
+<div style="display:flex;gap:20px;align-items:start">
+<span style="color:#2B5C9E;width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;font-size:34px;flex:none">✔</span>
+<p style="font-size:27px;line-height:1.45"><b>Atacante adaptativo</b> que conhece a defesa e otimiza contra ela.</p>
+</div>
+<div style="display:flex;gap:20px;align-items:start">
+<span style="color:#A9481A;width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;font-size:34px;flex:none">⚠</span>
+<p style="font-size:27px;line-height:1.45"><b>Pelo menos 3 sementes</b> nos resultados finais. Hoje usamos só a 42: decisão a tomar.</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">17 · Repositório do LP: main_fed.py, opção --defence (avg, krum, multikrum, RLR, fltrust, flame, flare, fld, layer_krum)</p>
+<aside>Avaliar no próprio código do artigo do LP é o argumento mais forte para um revisor: comparamos contra o ataque exatamente como os autores o publicaram, e contra as mesmas seis defesas da tabela deles. A semente única foi uma escolha para os experimentos exploratórios; para o artigo, um revisor vai pedir variância. A proposta é manter uma semente na triagem e usar três só na matriz final.</aside>
+</section>
+
+<section id="cronograma" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A9481A;font-weight:600">Para ser publicável</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">A direção cabe no plano de 12 meses</h2>
+</div>
+<table style="width:1664px;font-size:25px;color:#2A3346">
+<tr><th style="width:13%;text-align:left">Mês</th><th style="width:31%;text-align:left">Entregável do plano</th><th style="width:56%;text-align:left">Nesta direção</th></tr>
+<tr style="background:#F6DFCF"><td><b>M4 · out</b></td><td><b>Ataques injetáveis</b></td><td><b>LP completo (λ, modelo médio, adaptativo); testes de H1 e H2</b></td></tr>
+<tr><td>M5 · nov</td><td>Protótipo do agente</td><td>perfil por camada, concentração e sonda</td></tr>
+<tr><td>M6 · dez</td><td>Integração e relatório parcial</td><td>agregação real e resposta cirúrgica</td></tr>
+<tr><td>M7 · jan</td><td>Envenenamento de dados</td><td>label flip, pixel e DBA; teste de H3</td></tr>
+<tr><td>M8 · fev</td><td>Envenenamento de modelo</td><td>LP, LF, IPM, LIE e MinMax no repositório do LP</td></tr>
+<tr><td>M9 · mar</td><td>Falsos positivos e impacto</td><td>α = 0,1 e limiar calibrado por predição conforme</td></tr>
+<tr><td>M10 · abr</td><td>Ataques adaptativos</td><td>atacante que conhece a defesa; teste de H4</td></tr>
+<tr><td>M11 · mai</td><td>Artigo submetido</td><td>figura sucesso × aceitação, ablação, 3 sementes</td></tr>
+<tr><td>M12 · jun</td><td>Relatório final</td><td>repositório reprodutível</td></tr>
+</table>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">18 · Plano de Bolsa H.IAAC, Meta 3: os entregáveis mensais não mudam, só o foco</p>
+<aside>Nenhum entregável do plano precisa mudar. O que muda é o fio condutor: todos os meses passam a servir ao mesmo artigo. A maior parte do trabalho experimental pesado fica entre M6 e M10, quando o agente já estiver integrado à agregação.</aside>
+</section>
+
+<section id="passos" data-transition="fade" style="background:#ECE8DF;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A9481A;font-weight:600">Para ser publicável</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">Próximas duas semanas</h2>
+</div>
+<div style="display:flex;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:18px;background:#F7F5F0;border-radius:12px;padding:36px">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:56px;font-weight:600;color:#E07A45;line-height:1">1</p>
+<h3 style="font-size:32px;font-weight:600;color:#14213D;line-height:1.2">Testar H1 e H2</h3>
+<p style="font-size:26px;line-height:1.45">Coletar o perfil por camada do LP e dos honestos, com α = 0,5 e 0,1. Decide se a tese se sustenta antes de construir qualquer coisa.</p>
+<p style="font-size:24px;font-weight:600;color:#F7F5F0;background:#2B5C9E;border-radius:24px;padding:8px 20px">Feito em 12/10 · slide 21</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:18px;background:#F7F5F0;border-radius:12px;padding:36px">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:56px;font-weight:600;color:#E07A45;line-height:1">2</p>
+<h3 style="font-size:32px;font-weight:600;color:#14213D;line-height:1.2">Completar o LP</h3>
+<p style="font-size:26px;line-height:1.45">λ, modelo médio dos benignos e simulação da defesa no lab. Sem isso, qualquer detecção do LP é otimista.</p>
+<p style="font-size:24px;font-weight:600;color:#F7F5F0;background:#2B5C9E;border-radius:24px;padding:8px 20px">Feito em 12/10 · slide 20</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:18px;background:#F7F5F0;border-radius:12px;padding:36px">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:56px;font-weight:600;color:#E07A45;line-height:1">3</p>
+<h3 style="font-size:32px;font-weight:600;color:#14213D;line-height:1.2">Reproduzir o artigo</h3>
+<p style="font-size:26px;line-height:1.45">Uma linha da tabela no repositório original: CNN, Fashion-MNIST, FLAME. Confirma que medimos contra o ataque real.</p>
+<p style="font-size:24px;font-weight:600;color:#F7F5F0;background:#2B5C9E;border-radius:24px;padding:8px 20px">Feito em 13/10 · não reproduziu · slide 22</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">19 · Ordem pensada para falhar cedo: se H1 e H2 caírem, mudamos a tese antes de gastar GPU</p>
+<aside>O passo 1 é barato e decisivo, por isso vem primeiro. O passo 2 é obrigatório de qualquer forma, porque o M4 pede ataques injetáveis e o nosso LP está incompleto. O passo 3 tem custo ainda desconhecido: o repositório usa PyTorch 1.10 e Python 3.9, então o primeiro trabalho é montar o ambiente e medir quanto tempo leva um round.</aside>
+</section>
+
+<section id="res1" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:44px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#2B5C9E;font-weight:600">Resultados de 12/10 · passo 2</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">O LP completo passa pelo Multi-Krum, e fica mais forte</h2>
+</div>
+<div style="display:flex;gap:56px;align-items:start">
+<table style="width:1040px;font-size:26px;color:#2A3346">
+<tr><th style="width:24%;text-align:left">Ataque</th><th style="width:10%;text-align:right">α</th><th style="width:22%;text-align:left">Defesa</th><th style="width:16%;text-align:right">ASR</th><th style="width:28%;text-align:left">Atacantes excluídos</th></tr>
+<tr><td>LP simplificado</td><td style="text-align:right">0,5</td><td>FedAvg</td><td style="text-align:right">50%</td><td>—</td></tr>
+<tr><td>LP simplificado</td><td style="text-align:right">0,5</td><td>Multi-Krum</td><td style="text-align:right">69%</td><td>todos até o round 15</td></tr>
+<tr><td>LP completo</td><td style="text-align:right">0,5</td><td>FedAvg</td><td style="text-align:right">32%</td><td>—</td></tr>
+<tr style="background:#F6DFCF"><td><b>LP completo</b></td><td style="text-align:right">0,5</td><td><b>Multi-Krum</b></td><td style="text-align:right"><b>72%</b></td><td><b>nenhum, em todas as avaliações</b></td></tr>
+<tr style="background:#F6DFCF"><td><b>LP completo</b></td><td style="text-align:right">0,1</td><td>FedAvg</td><td style="text-align:right"><b>77%</b></td><td>—</td></tr>
+</table>
+<div style="flex:1;display:flex;flex-direction:column;gap:28px">
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px">
+<p style="font-size:26px;line-height:1.45"><b>O Multi-Krum amplifica o ataque:</b> descarta os honestos mais distantes e mantém os atacantes, que ficam no centro.</p>
+</div>
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px">
+<p style="font-size:26px;line-height:1.45"><b>O controle adaptativo</b> reduz o veneno a um só tensor: <b>fc1.weight</b>.</p>
+</div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">20 · lp_full em src/attacks/recent.py, fiel a models/Attacker.py (λ = 0,5, τ = 0,95). CIFAR-10, 40 rounds, 2 de 20 atacantes, semente 42. ASR de base: 2,5% (α = 0,5) e 4,3% (α = 0,1). Multi-Krum sem ataque: acurácia 67,2%</p>
+<aside>Implementei o LP como no código dos autores: centro igual à média dos benignos dos atacantes, substituição de camadas por tensor, redução adaptativa de camadas até passar num Multi-Krum simulado, λ = 0,5, e o mesmo delta enviado por todos os atacantes. Uma diferença: o atacante vê os honestos do round, o que o deixa mais forte que o do artigo. O resultado mais forte é a amplificação: com Multi-Krum o backdoor chega a 72%, contra 32% sem defesa. O LP simplificado é barrado nos 15 primeiros rounds e o completo nunca, então os mecanismos do artigo importam. A ASR de base é 2,5% com α = 0,5 e 4,3% com α = 0,1, então os 77% são efeito do ataque. A queda de acurácia sob Multi-Krum vem da própria defesa: sem ataque ele já fica em 67,2%, o mesmo valor que sob o LP completo.</aside>
+</section>
+
+<section id="res2" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:44px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#2B5C9E;font-weight:600">Resultados de 12/10 · passo 1</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">A concentração pega o LP com α = 0,5, mas não com α = 0,1</h2>
+</div>
+<div style="display:flex;gap:56px;align-items:start">
+<table style="width:1040px;font-size:26px;color:#2A3346">
+<tr><th style="width:43%;text-align:left">Escore (AUC)</th><th style="width:19%;text-align:right">LP simpl. α=0,5</th><th style="width:19%;text-align:right">LP compl. α=0,5</th><th style="width:19%;text-align:right">LP compl. α=0,1</th></tr>
+<tr><td>distância global à mediana</td><td style="text-align:right">0,91</td><td style="text-align:right;color:#A9481A"><b>0,19</b></td><td style="text-align:right">0,59</td></tr>
+<tr><td>máximo por camada</td><td style="text-align:right">0,88</td><td style="text-align:right;color:#A9481A"><b>0,25</b></td><td style="text-align:right">0,52</td></tr>
+<tr style="background:#F6DFCF"><td><b>concentração (H1)</b></td><td style="text-align:right"><b>0,95</b></td><td style="text-align:right"><b>0,94</b></td><td style="text-align:right;color:#A9481A"><b>0,40</b></td></tr>
+<tr><td>concentração sem 9 PCs (H2)</td><td style="text-align:right">0,64</td><td style="text-align:right">0,53</td><td style="text-align:right">0,75</td></tr>
+</table>
+<div style="flex:1;display:flex;flex-direction:column;gap:24px">
+<div style="border-left:6px solid #2B5C9E;padding:4px 0 4px 24px">
+<p style="font-size:25px;line-height:1.45"><b>α = 0,5:</b> o LP completo fica “típico demais” e engana as distâncias, mas a concentração o vê.</p>
+</div>
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px">
+<p style="font-size:25px;line-height:1.45"><b>α = 0,1:</b> só a fc1 com λ = 0,5 some na variação honesta, onde o ataque é mais forte.</p>
+</div>
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px">
+<p style="font-size:25px;line-height:1.45"><b>H2 refutada:</b> tirar as PCs apaga os próprios atacantes, que formam um componente.</p>
+</div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">21 · experiments/layer_profile.py, critérios fixados antes da coleta. 15 rounds, agregação oráculo. Em laranja e negrito: falha ou sinal invertido (AUC &lt; 0,5)</p>
+<aside>H1 se sustenta no critério declarado (α = 0,5, AUC ≥ 0,8) para as duas versões do LP. O ponto forte: com α = 0,5 o LP completo engana a distância global (0,19, invertida) e o detector camada a camada (0,25), que é o análogo do Multi-Krum por camada que os autores testaram. A concentração o pega pelo contraste entre a fc1 e as demais camadas. O ponto fraco: com α = 0,1 o escore cai para 0,40. H2 foi refutada na forma testada. Remover as PCs ajuda com α = 0,1 (0,40 para 0,75), mas atrapalha com α = 0,5 e inverte a distância global (0,01). Outro achado: mesmo com AUC 0,94, a decisão por z maior que 3 tem recall entre 0,20 e 0,53, então o limiar precisa ser calibrado.</aside>
+</section>
+
+<section id="res3" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:44px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#2B5C9E;font-weight:600">Resultados de 12–13/10 · passo 3</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">No código dos autores, o FLAME barra o LP em 4 de 5 execuções</h2>
+</div>
+<div style="display:flex;gap:48px;align-items:start">
+<table style="width:1120px;font-size:26px;color:#2A3346">
+<tr><th style="width:28%;text-align:left">LP sob FLAME</th><th style="width:18%;text-align:right">BSR final</th><th style="width:18%;text-align:right">melhor BSR</th><th style="width:18%;text-align:right">maliciosos aceitos</th><th style="width:18%;text-align:right">acurácia</th></tr>
+<tr><td>semente 1</td><td style="text-align:right;color:#A9481A"><b>0,27%</b></td><td style="text-align:right">7,3%</td><td style="text-align:right">7,5%</td><td style="text-align:right">89,3%</td></tr>
+<tr><td>semente 2</td><td style="text-align:right;color:#A9481A"><b>0,56%</b></td><td style="text-align:right">7,4%</td><td style="text-align:right">11,5%</td><td style="text-align:right">89,3%</td></tr>
+<tr><td>semente 3</td><td style="text-align:right;color:#A9481A"><b>0,52%</b></td><td style="text-align:right">9,4%</td><td style="text-align:right">4,5%</td><td style="text-align:right">88,9%</td></tr>
+<tr><td>execução 2 (sem semente)</td><td style="text-align:right;color:#A9481A"><b>0,76%</b></td><td style="text-align:right">3,1%</td><td style="text-align:right">7,5%</td><td style="text-align:right">89,7%</td></tr>
+<tr><td>execução 1 (travou no 54)</td><td style="text-align:right">81,4%</td><td style="text-align:right">85,8%</td><td style="text-align:right">96%</td><td style="text-align:right">84,9%</td></tr>
+<tr style="background:#E4ECF5"><td><b>artigo, Tab. 2</b></td><td style="text-align:right">74,9 ± 2,7%</td><td style="text-align:right">84,3 ± 3,1%</td><td style="text-align:right">—</td><td style="text-align:right">87,1%</td></tr>
+</table>
+<div style="flex:1;display:flex;flex-direction:column;gap:24px">
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px">
+<p style="font-size:25px;line-height:1.45"><b>Não reproduz:</b> todas as execuções completas ficam abaixo de 1%, no nível do BadNets (0,26%).</p>
+</div>
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px">
+<p style="font-size:25px;line-height:1.45"><b>Ressalva:</b> torch e hdbscan mais novos que os dos autores; posição do gatilho não informada.</p>
+</div>
+<div style="border-left:6px solid #2B5C9E;padding:4px 0 4px 24px">
+<p style="font-size:25px;line-height:1.45"><b>Motivação continua:</b> no laboratório, o Multi-Krum amplifica o LP (32% → 72%).</p>
+</div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">22 · Repositório original, CNN, Fashion-MNIST não-IID (q = 0,5), Apêndice A-7, 200 rounds. BSR final = média dos últimos 10% dos rounds. Sementes via experiments/repro_lp_seeded.py</p>
+<aside>Rodei o código original cinco vezes na linha FLAME da Tabela 2 (CNN, Fashion-MNIST). Como o repositório ignora o argumento de semente, as três últimas execuções usaram um script que semeia os geradores antes de rodar o código dos autores, sem alterá-lo. Nas quatro execuções que chegaram aos 200 rounds, o FLAME aceitou entre 4,5% e 11,5% dos maliciosos e o backdoor terminou abaixo de 1%, o mesmo nível do BadNets. A única execução em que o LP passou, com 81%, foi a primeira, que travou no round 54. Portanto, no nosso ambiente, o resultado do artigo contra o FLAME não se reproduz. Pode ser efeito das versões mais novas de torch e hdbscan, ou da posição do gatilho, que o artigo não informa. Isso não derruba a motivação: no laboratório, o Multi-Krum amplifica o LP. Mas no artigo não podemos afirmar que o LP fura o FLAME sem essa ressalva.</aside>
+</section>
+
+<section id="res5" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:44px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#2B5C9E;font-weight:600">Resultados de 12/10 · H3</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">O efeito do backdoor está na atualização, mas manchas sorteadas não o acham</h2>
+</div>
+<div style="display:flex;gap:56px;align-items:start">
+<table style="width:1040px;font-size:26px;color:#2A3346">
+<tr><th style="width:46%;text-align:left">AUC com α = 0,1</th><th style="width:27%;text-align:right">LP completo</th><th style="width:27%;text-align:right">pixel</th></tr>
+<tr style="background:#F6DFCF"><td><b>sonda: 64 manchas sorteadas (H3)</b></td><td style="text-align:right;color:#A9481A"><b>0,44</b></td><td style="text-align:right;color:#A9481A"><b>0,51</b></td></tr>
+<tr><td>sonda com w + 5·delta</td><td style="text-align:right">0,74</td><td style="text-align:right">0,62</td></tr>
+<tr><td>oráculo: só o gatilho real</td><td style="text-align:right"><b>0,83</b></td><td style="text-align:right"><b>0,94</b></td></tr>
+<tr><td>oráculo: classe apontada = alvo</td><td style="text-align:right">100%</td><td style="text-align:right">100%</td></tr>
+</table>
+<div style="flex:1;display:flex;flex-direction:column;gap:24px">
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px">
+<p style="font-size:25px;line-height:1.45"><b>H3 refutada:</b> 0,44 contra o critério de &gt; 0,70. DBA também fica em 0,50.</p>
+</div>
+<div style="border-left:6px solid #2B5C9E;padding:4px 0 4px 24px">
+<p style="font-size:25px;line-height:1.45"><b>Mas o sinal existe:</b> com o gatilho certo, um round basta, justamente onde a geometria falha.</p>
+</div>
+<div style="border-left:6px solid #2B5C9E;padding:4px 0 4px 24px">
+<p style="font-size:25px;line-height:1.45"><b>Próximo:</b> buscar a menor mancha que empurra o modelo do cliente para uma classe.</p>
+</div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">23 · experiments/probe_h3.py, critério fixado antes. Oráculo = diagnóstico com o gatilho real (teto, não detector). 15 rounds, agregação oráculo, semente 42</p>
+<aside>A sonda colou 64 manchas aleatórias nas 100 imagens do holdout e mediu, para cada cliente, o maior aumento de probabilidade de alguma classe, descontando o mesmo efeito no modelo global. Ela não separou nenhum backdoor com α = 0,1: LP completo 0,44, LP simplificado 0,51, pixel 0,51, DBA 0,50. O diagnóstico oráculo usa a mesma medida com o gatilho real e chega a 0,83 no LP completo e 0,94 no pixel, sempre apontando a classe-alvo. Ou seja, a atualização de um round carrega o backdoor mesmo com não-IID severo; o que falhou foi o sorteio das manchas. A busca otimizada, no estilo do Neural Cleanse, é o próximo teste. O custo por round é maior e precisa ser medido, e gatilhos semânticos (Edge-case) ou distribuídos (DBA) podem não ter uma mancha pequena equivalente.</aside>
+</section>
+
+<section id="res4" data-transition="fade" style="background:#14213D;color:#C9D2E3;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#F0A070;font-weight:600">Resultados de 12–14/10 · o que muda</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#F7F5F0">O não-IID severo virou o problema central</h2>
+</div>
+<div style="display:flex;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;background:#1E2E52;border-radius:12px;padding:36px">
+<h3 style="font-size:32px;font-weight:600;color:#F7F5F0">α = 0,1 decide</h3>
+<p style="font-size:26px;line-height:1.45">O ataque chega a 77% e o nosso melhor sinal fica em 0,59. É o caso que o artigo precisa resolver.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;background:#1E2E52;border-radius:12px;padding:36px">
+<h3 style="font-size:32px;font-weight:600;color:#F7F5F0">Heterogeneidade sem os atacantes</h3>
+<p style="font-size:26px;line-height:1.45">Estimar o subespaço honesto por PCs robustas ou pelo holdout, como no BOBA.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;background:#1E2E52;border-radius:12px;padding:36px">
+<h3 style="font-size:32px;font-weight:600;color:#F7F5F0">Limiar calibrado</h3>
+<p style="font-size:26px;line-height:1.45">AUC 0,94 com recall 0,20–0,53 em z &gt; 3: calibrar por predição conforme e combinar com os sinais do M3.</p>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;border-left:6px solid #E07A45;padding:8px 0 8px 32px">
+<p style="font-size:30px;line-height:1.45;color:#F7F5F0"><b>Próximos passos:</b> repetir o FLAME com o atacante do artigo; similaridade na camada crítica; busca otimizada do gatilho; resposta por camada em ciclo fechado.</p>
+<p style="font-size:26px;line-height:1.45">Multi-Krum e FLAME amplificando o LP reforçam a resposta cirúrgica: excluir clientes inteiros ajuda o atacante.</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#9AA6BF">24 · Análise completa em fl-robustness-lab/results/layer_profile/ANALISE.md. Uma semente só: diferenças pequenas podem ser ruído</p>
+<aside>A tese da concentração vale com não-IID moderado e fica como um componente. Ela não basta sozinha. O caso decisivo é α = 0,1, em que o LP completo é mais forte e as distâncias e a concentração ficam perto do acaso. A sonda sem gatilho foi testada em seguida (slide 23): com manchas sorteadas ela falha, mas o oráculo com o gatilho real mostra que o efeito está lá, e a busca do gatilho por otimização entra como terceiro passo. Antes vêm a checagem do FLAME com o atacante do artigo e a similaridade entre clientes na camada crítica, que é barata e ataca direto o caso α = 0,1. Os outros dois ajustes vêm direto dos dados: a heterogeneidade precisa ser estimada de forma que os atacantes não controlem, e o limiar fixo precisa de calibração.</aside>
+</section>
+
+<section id="balanco" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#2B5C9E;font-weight:600">Balanço de 12–14/10</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">Seis coisas não funcionaram; cinco se sustentam</h2>
+</div>
+<div style="display:flex;gap:56px;align-items:start">
+<div style="flex:1.15;display:flex;flex-direction:column;gap:18px">
+<h3 style="font-size:30px;font-weight:600;color:#A9481A">Não funcionou</h3>
+<p style="font-size:24px;line-height:1.4;border-left:6px solid #E07A45;padding:2px 0 2px 20px"><b>H1 com α = 0,1:</b> AUC da concentração cai para 0,40 (critério: 0,80).</p>
+<p style="font-size:24px;line-height:1.4;border-left:6px solid #E07A45;padding:2px 0 2px 20px"><b>H2:</b> remover as PCs de heterogeneidade apaga também os atacantes em conluio.</p>
+<p style="font-size:24px;line-height:1.4;border-left:6px solid #E07A45;padding:2px 0 2px 20px"><b>H3:</b> 64 manchas sorteadas dão AUC 0,44 no LP completo (critério: 0,70).</p>
+<p style="font-size:24px;line-height:1.4;border-left:6px solid #E07A45;padding:2px 0 2px 20px"><b>Limiar z &gt; 3:</b> mesmo com AUC 0,94, pega só 20–53% dos atacantes.</p>
+<p style="font-size:24px;line-height:1.4;border-left:6px solid #E07A45;padding:2px 0 2px 20px"><b>Reprodução:</b> o FLAME barra o LP em 4 de 5 execuções; a Tab. 2 do artigo não se repete.</p>
+<p style="font-size:24px;line-height:1.4;border-left:6px solid #E07A45;padding:2px 0 2px 20px"><b>Travamento:</b> a execução 1 parou no round 55; causa desconhecida, não se repetiu.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:18px">
+<h3 style="font-size:30px;font-weight:600;color:#2B5C9E">Funcionou</h3>
+<p style="font-size:24px;line-height:1.4;border-left:6px solid #2B5C9E;padding:2px 0 2px 20px"><b>LP completo</b> no laboratório, fiel ao código dos autores.</p>
+<p style="font-size:24px;line-height:1.4;border-left:6px solid #2B5C9E;padding:2px 0 2px 20px"><b>Linha de base medida:</b> Multi-Krum e FLAME amplificam o LP (89% e 93% com α = 0,1).</p>
+<p style="font-size:24px;line-height:1.4;border-left:6px solid #2B5C9E;padding:2px 0 2px 20px"><b>H1 com α = 0,5:</b> concentração 0,94, onde a distância global dá 0,19.</p>
+<p style="font-size:24px;line-height:1.4;border-left:6px solid #2B5C9E;padding:2px 0 2px 20px"><b>O sinal existe:</b> com o gatilho real, um round basta (AUC 0,83 e 0,94).</p>
+<p style="font-size:24px;line-height:1.4;border-left:6px solid #2B5C9E;padding:2px 0 2px 20px"><b>Controles fechados:</b> ASR de base 4,3% (α = 0,1); Multi-Krum sem ataque 67,2%.</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">25 · Critérios fixados antes de cada teste. Detalhes em fl-robustness-lab/results/layer_profile/ANALISE.md</p>
+<aside>Este é o resumo honesto dos três dias. Das quatro hipóteses, só a H1 se sustenta, e só com não-IID moderado; a H2 e a sonda com manchas sorteadas foram refutadas pelos critérios fixados antes. O limiar fixo também não serve: a separação é boa, mas o z maior que 3 deixa passar a maioria dos atacantes. A reprodução no código dos autores agora tem cinco execuções, três com semente: em quatro o FLAME barra o LP, então não podemos usar a Tabela 2 como premissa sem ressalva. Do outro lado, ficaram de pé o LP completo no laboratório, a amplificação do LP pelo Multi-Krum e pelo FLAME no laboratório (slide 26), a concentração com α = 0,5 e a prova de que o backdoor aparece numa atualização de um round quando se conhece o gatilho. Isso direciona o próximo passo: buscar o gatilho por otimização.</aside>
+</section>
+
+<section id="res6" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#2B5C9E;font-weight:600">Resultados de 14/10 · item 1: a linha de base</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">No laboratório, FLAME e Multi-Krum amplificam o LP e descartam honestos</h2>
+</div>
+<div style="display:flex;gap:48px;align-items:start">
+<table style="width:1160px;font-size:25px;color:#2A3346">
+<tr><th style="width:8%;text-align:right">α</th><th style="width:20%;text-align:left;padding-left:20px">Defesa</th><th style="width:18%;text-align:right">ASR do LP</th><th style="width:18%;text-align:right">acurácia sem ataque</th><th style="width:18%;text-align:right">honestos aceitos</th><th style="width:18%;text-align:right">atacantes aceitos</th></tr>
+<tr><td style="text-align:right">0,5</td><td style="padding-left:20px">FedAvg</td><td style="text-align:right">28%</td><td style="text-align:right">72,6%</td><td style="text-align:right">100%</td><td style="text-align:right">100%</td></tr>
+<tr><td style="text-align:right">0,5</td><td style="padding-left:20px">Multi-Krum</td><td style="text-align:right">67%</td><td style="text-align:right">66,4%</td><td style="text-align:right">78%</td><td style="text-align:right">100%</td></tr>
+<tr style="background:#F6DFCF"><td style="text-align:right">0,5</td><td style="padding-left:20px"><b>FLAME</b></td><td style="text-align:right;color:#A9481A"><b>82%</b></td><td style="text-align:right">60,2%</td><td style="text-align:right;color:#A9481A"><b>50%</b></td><td style="text-align:right">100%</td></tr>
+<tr><td style="text-align:right">0,1</td><td style="padding-left:20px">FedAvg</td><td style="text-align:right">72%</td><td style="text-align:right">68,7%</td><td style="text-align:right">100%</td><td style="text-align:right">100%</td></tr>
+<tr><td style="text-align:right">0,1</td><td style="padding-left:20px">Multi-Krum</td><td style="text-align:right">89%</td><td style="text-align:right">53,2%</td><td style="text-align:right">78%</td><td style="text-align:right">100%</td></tr>
+<tr style="background:#F6DFCF"><td style="text-align:right">0,1</td><td style="padding-left:20px"><b>FLAME</b></td><td style="text-align:right;color:#A9481A"><b>93%</b></td><td style="text-align:right;color:#A9481A"><b>40,8%</b></td><td style="text-align:right;color:#A9481A"><b>51%</b></td><td style="text-align:right">98%</td></tr>
+</table>
+<div style="flex:1;display:flex;flex-direction:column;gap:22px">
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px">
+<p style="font-size:24px;line-height:1.45"><b>Pior nos três eixos:</b> mais backdoor, menos acurácia e metade dos honestos fora, mesmo sem ataque.</p>
+</div>
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px">
+<p style="font-size:24px;line-height:1.45"><b>Contradiz o repositório dos autores</b> (4 de 5 barradas). Lá: 1 atacante em 10 e sem ver os honestos.</p>
+</div>
+<div style="border-left:6px solid #2B5C9E;padding:4px 0 4px 24px">
+<p style="font-size:24px;line-height:1.45"><b>Meta de ganho:</b> ASR baixo, acurácia perto de 69% e bem mais que 55% dos honestos aceitos com α = 0,1.</p>
+</div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">26 · experiments/flame_lab.py; FLAME fiel a utils/defense.py dos autores. CIFAR-10, 20 clientes, 2 atacantes, 40 rounds, semente 42. ASR: média dos rounds 35 e 40</p>
+<aside>Implementei o FLAME no laboratório copiando a lógica do código dos autores e comparei com FedAvg e Multi-Krum, com e sem o LP completo. O resultado é o oposto do que esperávamos: as duas defesas robustas aceitam praticamente todos os atacantes e aumentam o backdoor. Com não-IID severo, o FLAME chega a 93%, contra 72% sem defesa. Ao mesmo tempo, o FLAME descarta cerca de metade dos clientes honestos em todo round, mesmo sem ataque, e a acurácia sem ataque cai de 69% para 41%. Isso contradiz o repositório dos autores, onde o FLAME barrou o LP em quatro de cinco execuções. Os cenários diferem: lá há um atacante entre dez clientes por round; aqui, dois entre vinte, e o nosso atacante vê as atualizações honestas para simular a defesa. Antes de afirmar que o FLAME amplifica o LP, preciso repetir com o atacante do artigo. Para o nosso trabalho, isso define a meta: uma defesa que mantenha o backdoor baixo sem jogar fora os honestos nem a acurácia.</aside>
+</section>
+
+<section id="res7" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#2B5C9E;font-weight:600">Resultados de 14/10 · item 2</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">Olhar a similaridade tensor por tensor pega o LP com α = 0,1</h2>
+</div>
+<div style="display:flex;gap:48px;align-items:start">
+<table style="width:1100px;font-size:25px;color:#2A3346">
+<tr><th style="width:34%;text-align:left">AUC com α = 0,1</th><th style="width:22%;text-align:right">por tensor (nosso)</th><th style="width:22%;text-align:right">modelo inteiro</th><th style="width:22%;text-align:right">FoolsGold</th></tr>
+<tr style="background:#DCE6F2"><td><b>LP, variante evasiva</b></td><td style="text-align:right;color:#2B5C9E"><b>0,94</b></td><td style="text-align:right">0,41</td><td style="text-align:right">0,72</td></tr>
+<tr><td>LP dos autores (deltas idênticos)</td><td style="text-align:right">1,00</td><td style="text-align:right">1,00</td><td style="text-align:right">1,00</td></tr>
+<tr><td>pixel</td><td style="text-align:right;color:#A9481A">0,48</td><td style="text-align:right">0,48</td><td style="text-align:right">0,47</td></tr>
+<tr><td>DBA</td><td style="text-align:right;color:#A9481A">0,69</td><td style="text-align:right">0,74</td><td style="text-align:right">0,78</td></tr>
+<tr><td>concentração (H1), LP</td><td style="text-align:right">0,40</td><td style="text-align:right">—</td><td style="text-align:right">—</td></tr>
+</table>
+<div style="flex:1;display:flex;flex-direction:column;gap:22px">
+<div style="border-left:6px solid #2B5C9E;padding:4px 0 4px 24px">
+<p style="font-size:24px;line-height:1.45"><b>Critério cumprido:</b> 0,94 ≥ 0,80 e 0,53 acima do modelo inteiro. Primeiro sinal que funciona com α = 0,1.</p>
+</div>
+<div style="border-left:6px solid #2B5C9E;padding:4px 0 4px 24px">
+<p style="font-size:24px;line-height:1.45"><b>Aponta a camada certa:</b> o tensor mais suspeito é o fc1.weight, o L* do ataque.</p>
+</div>
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px">
+<p style="font-size:24px;line-height:1.45"><b>Limite:</b> não pega backdoors treinados separadamente (pixel, DBA). Falta o atacante que soma ruído em L* (H4).</p>
+</div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">27 · experiments/layer_similarity.py, critério fixado antes. Variante evasiva: cada atacante usa o próprio delta limpo fora de L*. 15 rounds, agregação oráculo, semente 42</p>
+<aside>No LP dos autores, todos os atacantes mandam o mesmo delta, então qualquer medida de similaridade os pega; isso não prova nada. Por isso criei uma variante evasiva: cada atacante usa o próprio delta limpo fora das camadas envenenadas, e só elas carregam a parte em comum. Contra essa variante, com não-IID severo, a similaridade no modelo inteiro fica em 0,41, abaixo do acaso, porque a parte envenenada se perde no resto. Olhando tensor por tensor, a AUC sobe para 0,94, e o tensor que mais se destaca é justamente o fc1.weight, que o ataque escolheu. É o primeiro sinal nosso que funciona onde a concentração falhou. O limite é claro: backdoors treinados separadamente, como pixel e DBA, não compartilham uma componente construída e não são pegos. O próximo teste é o atacante que conhece a defesa e soma ruído na camada envenenada, para medir quanto backdoor ele perde para fugir.</aside>
+</section>
+
+<section id="res8" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:36px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#2B5C9E;font-weight:600">Resultados de 15/10 · item 4</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">Cortar só o tensor suspeito barra o LP sem perder acurácia</h2>
+</div>
+<div style="display:flex;gap:48px;align-items:start">
+<table style="width:1150px;font-size:24px;color:#2A3346">
+<tr><th style="width:28%;text-align:left">α = 0,1</th><th style="text-align:right">ASR, LP dos autores</th><th style="text-align:right">ASR, LP evasivo</th><th style="text-align:right">acurácia sem ataque</th><th style="text-align:right">honestos aceitos</th></tr>
+<tr><td>FedAvg</td><td style="text-align:right">72,4%</td><td style="text-align:right">70,0%</td><td style="text-align:right">68,7%</td><td style="text-align:right">100%</td></tr>
+<tr><td>Multi-Krum</td><td style="text-align:right">88,8%</td><td style="text-align:right">17,2%</td><td style="text-align:right">53,2%</td><td style="text-align:right">80%</td></tr>
+<tr><td>FLAME</td><td style="text-align:right">92,7%</td><td style="text-align:right">75,7%</td><td style="text-align:right">40,8%</td><td style="text-align:right">55%</td></tr>
+<tr style="background:#DCE6F2"><td><b>por tensor (nosso)</b></td><td style="text-align:right;color:#2B5C9E"><b>2,4%</b></td><td style="text-align:right;color:#2B5C9E"><b>3,7%</b></td><td style="text-align:right;color:#2B5C9E"><b>68,3%</b></td><td style="text-align:right;color:#2B5C9E"><b>96% dos parâm.</b></td></tr>
+<tr><td style="color:#6B7385">nosso, α = 0,5</td><td style="text-align:right;color:#6B7385">1,7%</td><td style="text-align:right;color:#6B7385">2,3%</td><td style="text-align:right;color:#6B7385">72,6% (= FedAvg)</td><td style="text-align:right;color:#6B7385">98% dos parâm.</td></tr>
+</table>
+<div style="flex:1;display:flex;flex-direction:column;gap:22px">
+<div style="border-left:6px solid #2B5C9E;padding:4px 0 4px 24px">
+<p style="font-size:24px;line-height:1.45"><b>Critério cumprido nos dois α:</b> ASR ≤ 10%, acurácia a até 2 pp do FedAvg, ≥ 95% dos parâmetros honestos.</p>
+</div>
+<div style="border-left:6px solid #2B5C9E;padding:4px 0 4px 24px">
+<p style="font-size:24px;line-height:1.45"><b>Como:</b> o cliente marcado só perde o tensor suspeito; o resto do modelo dele entra na média.</p>
+</div>
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px">
+<p style="font-size:24px;line-height:1.45"><b>Ressalva:</b> semente única, e o atacante ainda não conhece a defesa (próximo slide).</p>
+</div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">28 · experiments/layer_guard_lab.py, critério fixado antes. CIFAR-10, 20 clientes, 2 atacantes, 40 rounds, semente 42. ASR: média dos rounds 35 e 40</p>
+<aside>Este é o primeiro resultado em ciclo fechado. A defesa usa o sinal do item 2: a cada round compara os clientes tensor por tensor e, quando um cliente se destaca num tensor, só aquele tensor dele fica fora da média. Contra os dois LPs, o backdoor cai para 2 a 4%, enquanto FedAvg, Multi-Krum e FLAME deixam passar de 17 a 93%. Sem ataque, a acurácia é praticamente a do FedAvg, e mais de 96% dos parâmetros dos honestos entram na média, contra 55% dos clientes no FLAME. O critério foi fixado antes de rodar e foi cumprido com α = 0,1 e 0,5. A ressalva é importante: esse atacante não sabe que a defesa compara tensores; o próximo slide mostra o que acontece quando ele sabe.</aside>
+</section>
+
+<section id="res9" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:36px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A9481A;font-weight:600">Resultados de 15/10 · H4</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">Um atacante que soma ruído em L* foge sem perder o backdoor</h2>
+</div>
+<div style="display:flex;gap:48px;align-items:start">
+<table style="width:1150px;font-size:24px;color:#2A3346">
+<tr><th style="width:16%;text-align:left">ruído ν</th><th style="text-align:right">AUC similaridade</th><th style="text-align:right">AUC norma</th><th style="text-align:right">ASR FedAvg</th><th style="text-align:right">ASR por tensor</th></tr>
+<tr><td>0</td><td style="text-align:right">0,94</td><td style="text-align:right">—</td><td style="text-align:right">70,0%</td><td style="text-align:right;color:#2B5C9E">3,7%</td></tr>
+<tr><td>0,5</td><td style="text-align:right">0,91</td><td style="text-align:right">0,64</td><td style="text-align:right">69,7%</td><td style="text-align:right;color:#2B5C9E">5,3%</td></tr>
+<tr style="background:#F6E3D7"><td><b>1</b></td><td style="text-align:right;color:#A9481A"><b>0,65</b></td><td style="text-align:right;color:#A9481A"><b>0,80</b></td><td style="text-align:right">68,4%</td><td style="text-align:right;color:#A9481A"><b>71,8%</b></td></tr>
+<tr><td>2</td><td style="text-align:right;color:#A9481A">0,63</td><td style="text-align:right">0,96</td><td style="text-align:right">68,2%</td><td style="text-align:right;color:#A9481A">73,0%</td></tr>
+<tr><td>4</td><td style="text-align:right;color:#A9481A">0,62</td><td style="text-align:right">0,99</td><td style="text-align:right">67,8%</td><td style="text-align:right;color:#A9481A">70,3%</td></tr>
+</table>
+<div style="flex:1;display:flex;flex-direction:column;gap:22px">
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px">
+<p style="font-size:24px;line-height:1.45"><b>H4 refutada:</b> com ν ≥ 1 o sinal cai para ~0,63 e o backdoor continua em ~70%. Fugir não custa nada ao atacante.</p>
+</div>
+<div style="border-left:6px solid #2B5C9E;padding:4px 0 4px 24px">
+<p style="font-size:24px;line-height:1.45"><b>Pista:</b> o ruído infla a norma do tensor; a norma pega ν ≥ 2 (0,96–0,99). Com ν = 1 o atacante escapa dos dois sinais.</p>
+</div>
+<div style="border-left:6px solid #2B5C9E;padding:4px 0 4px 24px">
+<p style="font-size:24px;line-height:1.45"><b>Próximo:</b> combinar similaridade e norma por tensor, com critério fixado antes.</p>
+</div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">29 · Ruído gaussiano independente por atacante em L*, norma = ν × componente maliciosa. AUC: agregação oráculo, 15 rounds; ASR: ciclo fechado, 40 rounds, α = 0,1, semente 42</p>
+<aside>A H4 dizia que, para fugir da comparação por tensor, o atacante teria de sacrificar o backdoor. Não é o que acontece. Cada atacante soma ruído próprio na camada envenenada; como o ruído é independente, os dois deixam de se parecer, mas na média do servidor o ruído se dilui e a parte envenenada continua lá. Com ruído do tamanho da parte maliciosa, a detecção cai para 0,65 e o backdoor passa em 72% mesmo com a nossa defesa. O lado bom é que o ruído tem um custo visível: ele infla a norma daquele tensor, e a norma por tensor pega o ruído grande quase perfeitamente. O ponto fraco é o ruído de tamanho médio, ν = 1, que escapa dos dois sinais. O próximo teste combina similaridade e norma por tensor, com o critério fixado antes.</aside>
+</section>
+
+<section id="res10" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:112px 128px 150px;display:flex;flex-direction:column;gap:28px">
+<div style="display:flex;flex-direction:column;gap:10px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#2B5C9E;font-weight:600">Resultados de 16/10 · avaliação final, α = 0,1</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:54px;font-weight:600;line-height:1.12;color:#14213D">Na semente 42, LayerGuard barra o LP sem perder acurácia — nas réplicas, não</h2>
+</div>
+<table style="width:1664px;font-size:23px;color:#2A3346">
+<tr><th style="width:40%;text-align:left">ataque</th><th style="text-align:right">FedAvg</th><th style="text-align:right">Multi-Krum</th><th style="text-align:right">FLAME</th><th style="text-align:right">LayerGuard</th></tr>
+<tr><td>sem ataque · acurácia</td><td style="text-align:right">68,7%</td><td style="text-align:right">53,2%</td><td style="text-align:right">40,8%</td><td style="text-align:right;color:#2B5C9E"><b>68,8%</b></td></tr>
+<tr style="background:#DCE6F2"><td>LP dos autores · ASR</td><td style="text-align:right">72,4%</td><td style="text-align:right">88,8%</td><td style="text-align:right">92,7%</td><td style="text-align:right;color:#2B5C9E"><b>2,6%</b></td></tr>
+<tr style="background:#DCE6F2"><td>LP evasivo</td><td style="text-align:right">70,0%</td><td style="text-align:right">17,2%</td><td style="text-align:right">75,7%</td><td style="text-align:right;color:#2B5C9E"><b>2,4%</b></td></tr>
+<tr style="background:#DCE6F2"><td>LP + ruído em L* (adaptativo)</td><td style="text-align:right">68,4%</td><td style="text-align:right">19,1%</td><td style="text-align:right">44,1%</td><td style="text-align:right;color:#2B5C9E"><b>3,2%</b></td></tr>
+<tr style="background:#DCE6F2"><td>LP + ruído, norma preservada (adaptativo)</td><td style="text-align:right">50,6%</td><td style="text-align:right">6,8%</td><td style="text-align:right">32,9%</td><td style="text-align:right;color:#2B5C9E"><b>8,6%</b></td></tr>
+<tr><td>pixel · ASR</td><td style="text-align:right">97,2%</td><td style="text-align:right">5,3%</td><td style="text-align:right">12,5%</td><td style="text-align:right;color:#A9481A">97,0%</td></tr>
+<tr><td>PGD · ASR</td><td style="text-align:right">93,3%</td><td style="text-align:right">93,9%</td><td style="text-align:right">96,2%</td><td style="text-align:right;color:#A9481A">72,3%</td></tr>
+<tr><td>DBA · ASR</td><td style="text-align:right">42,7%</td><td style="text-align:right">86,8%</td><td style="text-align:right">40,1%</td><td style="text-align:right;color:#A9481A">44,1%</td></tr>
+<tr><td>ruído gaussiano · acurácia</td><td style="text-align:right">10,0%</td><td style="text-align:right">62,6%</td><td style="text-align:right">46,7%</td><td style="text-align:right;color:#2B5C9E"><b>67,2%</b></td></tr>
+<tr><td>IPM · acurácia</td><td style="text-align:right">65,4%</td><td style="text-align:right">36,6%</td><td style="text-align:right">13,1%</td><td style="text-align:right;color:#2B5C9E"><b>66,1%</b></td></tr>
+<tr><td>LIE · acurácia</td><td style="text-align:right">64,5%</td><td style="text-align:right">44,6%</td><td style="text-align:right">47,0%</td><td style="text-align:right;color:#2B5C9E"><b>66,9%</b></td></tr>
+<tr style="border-top:2px solid #14213D"><td><b>pior acurácia nos 11 cenários</b></td><td style="text-align:right">10%</td><td style="text-align:right">37%</td><td style="text-align:right">13%</td><td style="text-align:right;color:#2B5C9E"><b>64%</b></td></tr>
+<tr style="background:#F6E3D7"><td><b>réplicas, LP + ruído:</b> sementes 44 e 45</td><td style="text-align:right">58% / 71%</td><td style="text-align:right">—</td><td style="text-align:right">—</td><td style="text-align:right;color:#A9481A"><b>55% / 69%</b></td></tr>
+</table>
+<p style="position:absolute;left:128px;bottom:56px;width:1664px;font-size:22px;color:#6B7385">31 · Semente 42: C2 e C3 cumpridos, C1 falhou (4 de 7). Réplicas (confirm_seed.py): semente 43 inconclusiva (ataque não funcionou), 44 e 45 a defesa falha, pegando 1 de 2 atacantes. LayerGuard = similaridade + norma por tensor, só o tensor marcado sai. CIFAR-10, 20 clientes, 40 rounds, semente 42</p>
+<aside>Esta é a avaliação final, com não-IID severo. O LayerGuard compara os clientes tensor por tensor, pela semelhança e pela norma, e tira da média só o tensor suspeito. Contra as quatro variantes do LP, inclusive as duas adaptativas que somam ruído na camada envenenada, o backdoor fica entre 2 e 9%. Contra os ataques de modelo, mantém 66 a 67% de acurácia, enquanto o FedAvg cai para 10% no ruído e o FLAME para 13% no IPM. Sem ataque, a acurácia é a do FedAvg. A última linha resume: no pior cenário o LayerGuard ainda tem 64%, contra 37% do Multi-Krum. O que não funciona são os backdoors treinados em separado, pixel, PGD e DBA, que o próximo slide explica. O mais importante vem por último: repeti o caso central com outras sementes. Na 43 o ataque nem funcionou; na 44 e na 45 a defesa falhou, porque pegou só um dos dois atacantes, e o outro passou sozinho. Então o resultado da semente 42 não é robusto e ainda não pode ser afirmado. Pelo critério fixado antes, pedíamos backdoor abaixo de 10% em 5 de 7 ataques e conseguimos 4, então o critério 1 falhou, e eu reporto isso assim.</aside>
+</section>
+
+<section id="res11" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A9481A;font-weight:600">Resultados de 16/10 · o que não funciona e por quê</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:58px;font-weight:600;line-height:1.12;color:#14213D">Backdoors treinados em separado não deixam rastro nas atualizações</h2>
+</div>
+<div style="display:flex;gap:40px">
+<div style="flex:1;display:flex;flex-direction:column;gap:22px">
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px"><p style="font-size:25px;line-height:1.45"><b>Diagnóstico:</b> Krum, norma, sinais por tensor e acúmulo ao longo dos rounds — nenhum separa pixel, PGD ou DBA dos honestos com α = 0,1.</p></div>
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px"><p style="font-size:25px;line-height:1.45"><b>Por quê:</b> os clientes mais anômalos são honestos com dados de uma classe só. Um backdoor treinado em separado parece um deles.</p></div>
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px"><p style="font-size:25px;line-height:1.45"><b>As outras defesas também não:</b> Multi-Krum e FLAME barram o pixel descartando honestos (−15 e −28 pp) e amplificam PGD e DBA.</p></div>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:22px">
+<div style="border-left:6px solid #2B5C9E;padding:4px 0 4px 24px"><p style="font-size:25px;line-height:1.45"><b>Tentativa refutada:</b> cortar a norma por tensor (v1) custou 3 pp e não barrou nenhum dos três.</p></div>
+<div style="border-left:6px solid #2B5C9E;padding:4px 0 4px 24px"><p style="font-size:25px;line-height:1.45"><b>Enquadramento do artigo:</b> decidir por tensor resolve a classe "parte construída e compartilhada" (LP) e os ataques de modelo; a classe "treinada em separado" pede outra fonte de informação (dados no servidor, sondas).</p></div>
+<div style="border-left:6px solid #2B5C9E;padding:4px 0 4px 24px"><p style="font-size:25px;line-height:1.45"><b>Rascunho:</b> results/final_lab/ARTIGO_rascunho.md.</p></div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">32 · experiments/diag_separate_backdoors.py (agregação oráculo, 10 rounds) e experiments/final_lab.py</p>
+<aside>Este é o limite do método, e também um resultado. Com não-IID severo, os clientes honestos mais estranhos são os que têm dados de quase uma classe só, e um atacante que treina o próprio backdoor fica parecido com eles. Testamos todos os sinais que tínhamos, inclusive acumulando ao longo dos rounds, e nenhum separa. As defesas por cliente só barram o pixel porque descartam muitos honestos, e pioram PGD e DBA. Por isso o artigo separa duas classes: o que é construído e compartilhado, como o LP e os ataques de modelo, que decidir por tensor resolve sem custo; e o que é treinado em separado, que precisa de outra informação, como dados no servidor ou sondas com gatilho.</aside>
+</section>
+
+<section id="f2lit" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#2B5C9E;font-weight:600">Fase 2 · literatura 2024–2026</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:58px;font-weight:600;line-height:1.12;color:#14213D">"Decidir por camada" já existe: o FedSurrogate vira linha de base</h2>
+</div>
+<div style="display:flex;gap:40px">
+<div style="flex:1;display:flex;flex-direction:column;gap:22px">
+<div style="border-left:6px solid #2B5C9E;padding:4px 0 4px 24px"><p style="font-size:25px;line-height:1.45"><b>FedSurrogate</b> (arXiv 2605.11122, mai/2026): escolhe as camadas críticas por divergência de cosseno, agrupa os clientes com HDBSCAN e troca as camadas críticas dos marcados pelas de um doador confiável.</p></div>
+<div style="border-left:6px solid #2B5C9E;padding:4px 0 4px 24px"><p style="font-size:25px;line-height:1.45"><b>Avaliação deles contra o LP:</b> só α = 0,5, sem sementes nem variância (ASR 1,1%, 16% de falsos positivos). O repositório citado não existe; reimplementamos pelo texto.</p></div>
+<div style="border-left:6px solid #2B5C9E;padding:4px 0 4px 24px"><p style="font-size:25px;line-height:1.45"><b>Outros:</b> FLD, LBAA-FedAVG, RFLDefense, AlignIns (CVPR 2025), FedMAST (ICTAI 2026); ataques novos por camada: LSA (ICC 2026) e alinhamento por camada (ICCV 2025).</p></div>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:18px">
+<p style="font-size:26px;font-weight:600;color:#14213D">FedSurrogate no laboratório, LP + ruído, α = 0,1</p>
+<table style="width:100%;font-size:24px;color:#2A3346">
+<tr><th style="text-align:left">semente</th><th style="text-align:right">ASR FedAvg</th><th style="text-align:right">ASR FedSurrogate</th><th style="text-align:right">acurácia</th></tr>
+<tr><td>42</td><td style="text-align:right">73%</td><td style="text-align:right;color:#2B5C9E">16%</td><td style="text-align:right">55%</td></tr>
+<tr><td>44</td><td style="text-align:right">59%</td><td style="text-align:right;color:#A9481A">71%</td><td style="text-align:right">51%</td></tr>
+<tr><td>45</td><td style="text-align:right">72%</td><td style="text-align:right;color:#2B5C9E">9%</td><td style="text-align:right">46%</td></tr>
+<tr style="background:#F6E3D7"><td>46 (teste)</td><td style="text-align:right">62%</td><td style="text-align:right;color:#A9481A">69%</td><td style="text-align:right">51%</td></tr>
+<tr style="background:#F6E3D7"><td>47 (teste)</td><td style="text-align:right">72%</td><td style="text-align:right;color:#A9481A">54%</td><td style="text-align:right">53%</td></tr>
+<tr style="background:#F6E3D7"><td>48 (teste)</td><td style="text-align:right">77%</td><td style="text-align:right;color:#A9481A">84%</td><td style="text-align:right">55%</td></tr>
+</table>
+<p style="font-size:24px;line-height:1.45">Barra em 2 de 6 sementes e custa 10–20 pp de acurácia (FedAvg: 63–68%). <b>Na condição do artigo deles (α = 0,5, LP dos autores): ASR 66%, contra 28% no FedAvg</b> — amplifica, como o Multi-Krum.</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">33 · src/defenses/fedsurrogate.py · results/fase2/FINAL.md · sementes 42/44/45 de desenvolvimento, 46/47/48 de teste</p>
+<aside>A busca na literatura achou o trabalho mais próximo: o FedSurrogate, de maio de 2026, que também olha camadas críticas e troca só essas camadas dos clientes suspeitos. Então "decidir por camada" sozinho não é novidade, e ele precisa ser linha de base. Eles avaliaram o LP só com α = 0,5 e sem repetir sementes. Reimplementamos pelo artigo, porque o repositório citado não existe, e rodamos com α = 0,1 em seis sementes: barra em duas, falha em quatro e custa de 10 a 20 pontos de acurácia. E mesmo na condição deles, com α = 0,5, o backdoor ficou em 66%, mais que os 28% do FedAvg. É uma reimplementação pelo texto, então trato isso com cautela.</aside>
+</section>
+
+<section id="f2diag" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A9481A;font-weight:600">Fase 2 · por que o LayerGuard falha nas réplicas</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:58px;font-weight:600;line-height:1.12;color:#14213D">Fora da semente 42, o LP com ruído não deixa rastro nas atualizações</h2>
+</div>
+<div style="display:flex;gap:40px">
+<div style="flex:1;display:flex;flex-direction:column;gap:22px">
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px"><p style="font-size:25px;line-height:1.45"><b>A semente 42 era a fácil:</b> lá o Multi-Krum simulado pelo atacante rejeitava as camadas críticas e o L* encolhia para um tensor só (fc1.weight). Nas 44/45, L* fica com 3 a 6 tensores.</p></div>
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px"><p style="font-size:25px;line-height:1.45"><b>Escores:</b> nas 44/45 nenhum atacante passa de 3 em nenhum tensor de L*; a parte maliciosa de cada tensor é pequena perto da heterogeneidade honesta.</p></div>
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px"><p style="font-size:25px;line-height:1.45"><b>Similaridade:</b> o cosseno entre os dois atacantes (0,13–0,41) é igual ao dos honestos com classes parecidas (p95 0,38–0,70).</p></div>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:22px">
+<div style="border-left:6px solid #2B5C9E;padding:4px 0 4px 24px"><p style="font-size:25px;line-height:1.45"><b>Regras testadas fora do circuito</b> (limiar menor, média exponencial, soma por cliente, evidência por par ao longo dos rounds): nenhuma marca ≥ 50% de L* com ≤ 5% de honestos nas três sementes.</p></div>
+<div style="border-left:6px solid #2B5C9E;padding:4px 0 4px 24px"><p style="font-size:25px;line-height:1.45"><b>Evidência por par:</b> o par de atacantes fica em 1º de 190 na semente 44, mas em 13º na 42 e 15º na 45.</p></div>
+<div style="background:#14213D;border-radius:12px;padding:24px 28px"><p style="font-size:25px;line-height:1.45;color:#F7F5F0"><b style="color:#F0A070">Conclusão (H5):</b> com α = 0,1, o LP evasivo com ruído é tão inseparável pelas atualizações quanto os backdoors treinados em separado. Nenhuma correção por estatística foi para o circuito fechado. Confirmado depois nas sementes de teste (slide 37).</p></div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">34 · lg_shadow (registro por round, tensor e cliente) · experiments/fase2_diag.py e fase2_analyze.py · sementes 42, 44, 45</p>
+<aside>Antes de tentar consertar, medi por que a defesa falhava. Rodei uma versão sombra do LayerGuard que agrega como o FedAvg mas registra todos os escores. A semente 42 tinha uma particularidade: o atacante, ao simular o Multi-Krum, acabava envenenando um único tensor, e aí a assinatura fica forte. Nas outras sementes ele espalha o veneno em três a seis tensores, e em cada um a parte maliciosa some no meio da diferença natural entre honestos. Testei quatro regras alternativas nos registros, sem rodar treino, e nenhuma passou no critério. Por isso não levei nenhuma delas adiante.</aside>
+</section>
+
+<section id="f2nc" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:112px 128px 150px;display:flex;flex-direction:column;gap:32px">
+<div style="display:flex;flex-direction:column;gap:10px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#2B5C9E;font-weight:600">Fase 2 · reparo do modelo no servidor (100 amostras limpas)</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:54px;font-weight:600;line-height:1.12;color:#14213D">Inverter o gatilho resolve pixel e DBA — mas não enxerga o LP</h2>
+</div>
+<div style="display:flex;gap:40px">
+<div style="flex:1.15;display:flex;flex-direction:column;gap:16px">
+<p style="font-size:25px;line-height:1.45"><b>NC-U:</b> Neural Cleanse enxuto (máscara + padrão por classe; alvo se o índice de anomalia > 2) e desaprendizado com o gatilho invertido e rótulo verdadeiro. Sem saber gatilho nem alvo.</p>
+<table style="width:100%;font-size:23px;color:#2A3346">
+<tr><th style="text-align:left">FedAvg + NC-U, ASR</th><th style="text-align:right">antes</th><th style="text-align:right">depois</th><th style="text-align:right">custo</th></tr>
+<tr style="background:#DCE6F2"><td>pixel, sementes 46/47/48</td><td style="text-align:right">89 / 94 / 93%</td><td style="text-align:right;color:#2B5C9E"><b>1 / 2 / 1%</b></td><td style="text-align:right">1,7–3,3 pp</td></tr>
+<tr style="background:#DCE6F2"><td>DBA, sementes 46/47/48</td><td style="text-align:right">85 / 67 / 94%</td><td style="text-align:right;color:#2B5C9E"><b>2 / 1 / 0%</b></td><td style="text-align:right">0,3–4,7 pp</td></tr>
+<tr><td>PGD, semente 42</td><td style="text-align:right">94%</td><td style="text-align:right;color:#A9481A">71%</td><td style="text-align:right">3,2 pp</td></tr>
+<tr><td>sem ataque, 4 sementes</td><td style="text-align:right">—</td><td style="text-align:right">nunca detectado</td><td style="text-align:right">0 pp</td></tr>
+<tr style="background:#F6E3D7"><td>família LP, 9 modelos</td><td style="text-align:right">55–80%</td><td style="text-align:right;color:#A9481A"><b>detectado em 1</b></td><td style="text-align:right">—</td></tr>
+</table>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:22px">
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px"><p style="font-size:25px;line-height:1.45"><b>Sem gatilho, falha:</b> fine-pruning só derruba o ASR com ~80% de fc1 podado, com acurácia já em ~47%; a poda dentro do treino deixa 70% e 59%.</p></div>
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px"><p style="font-size:25px;line-height:1.45"><b>Por que o LP escapa:</b> índice 0,7–1,7. O modelo com LP não ganha o "atalho" de máscara pequena que o NC procura; no modelo limpo, a classe 0 já é a mais fácil.</p></div>
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px"><p style="font-size:25px;line-height:1.45"><b>Rejeitado:</b> desaprender a classe mais fácil sempre (sem detecção) custa 4,8 pp no modelo limpo e erra o alvo.</p></div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:56px;width:1664px;font-size:22px;color:#6B7385">35 · src/defenses/nc.py, repair.py · results/fase2/nc.md e repair.md · lr 0,001, 10 épocas, metade das amostras com gatilho</p>
+<aside>Como as atualizações não bastam, mudei de fonte de informação: o servidor guarda 100 amostras limpas e examina o modelo final. Primeiro tentei reparos que não precisam achar o gatilho, poda e ajuste fino, e eles falharam. Depois, uma versão enxuta do Neural Cleanse: para cada classe, procuro o menor carimbo que leva tudo para ela; se uma classe é muito mais fácil que as outras, é o alvo, e eu desaprendo esse carimbo. Contra pixel e DBA funciona em todas as sementes de teste, com o ataque caindo para 2% ou menos, e nunca dispara num modelo limpo. Contra o LP não detecta: o modelo envenenado pelo LP não fica com um atalho pequeno que o método encontre.</aside>
+</section>
+
+<section id="f2final" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:112px 128px 150px;display:flex;flex-direction:column;gap:28px">
+<div style="display:flex;flex-direction:column;gap:10px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A9481A;font-weight:600">Fase 2 · teste pré-registrado, sementes 46–48 (não usadas no desenvolvimento)</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:54px;font-weight:600;line-height:1.12;color:#14213D">LayerGuard v2 + NC-U: critério F1 falhou (4 de 9), F2 cumprido</h2>
+</div>
+<table style="width:1664px;font-size:23px;color:#2A3346">
+<tr><th style="width:34%;text-align:left">ataque · ASR</th><th style="text-align:right">FedAvg</th><th style="text-align:right">LayerGuard v2</th><th style="text-align:right">LG + NC-U</th><th style="text-align:right">FedAvg + NC-U</th></tr>
+<tr style="background:#F6E3D7"><td>LP + ruído ν = 1 · 46 / 47 / 48</td><td style="text-align:right">62 / 72 / 77%</td><td style="text-align:right">54 / 66 / 73%</td><td style="text-align:right;color:#A9481A"><b>57 / 66 / 76%</b></td><td style="text-align:right;color:#A9481A">63 / 76 / 79%</td></tr>
+<tr><td>pixel · 46 / 47 / 48</td><td style="text-align:right">88 / 94 / 93%</td><td style="text-align:right">86 / 93 / 92%</td><td style="text-align:right">1 / 2 / <span style="color:#A9481A"><b>92%</b></span></td><td style="text-align:right;color:#2B5C9E"><b>1 / 2 / 1%</b></td></tr>
+<tr><td>DBA · 46 / 47 / 48</td><td style="text-align:right">86 / 64 / 95%</td><td style="text-align:right">84 / 52 / 93%</td><td style="text-align:right"><span style="color:#A9481A"><b>84%</b></span> / 1 / 0%</td><td style="text-align:right;color:#2B5C9E"><b>2 / 1 / 0%</b></td></tr>
+<tr style="border-top:2px solid #14213D"><td>sem ataque · acurácia</td><td style="text-align:right">64 / 68 / 67%</td><td style="text-align:right">63 / 66 / 66%</td><td style="text-align:right;color:#2B5C9E"><b>63 / 66 / 67%</b></td><td style="text-align:right">65 / 68 / 67%</td></tr>
+</table>
+<div style="display:flex;gap:32px">
+<div style="flex:1;border-left:6px solid #A9481A;padding:4px 0 4px 24px"><p style="font-size:25px;line-height:1.45"><b>LP + ruído em 6 sementes:</b> nenhum método barra de forma robusta — LayerGuard v2 1 de 6, FedSurrogate 2 de 6 (−10 a −20 pp), NC-U 1 de 6. O resultado "v2 barra todo o LP" era artefato da semente 42.</p></div>
+<div style="flex:1;border-left:6px solid #2B5C9E;padding:4px 0 4px 24px"><p style="font-size:25px;line-height:1.45"><b>Achado:</b> com o LayerGuard no treino, o NC deixou de detectar 2 casos que detecta sobre o FedAvg. FedAvg + NC-U resolve pixel e DBA em 6 de 6 (comparação reportada, não critério).</p></div>
+</div>
+<p style="position:absolute;left:128px;bottom:56px;width:1664px;font-size:22px;color:#6B7385">36 · Critérios fixados antes (adendo 5, experiments/fase2_lab.py): F1 = ASR ≤ 10% em todo caso com FedAvg ≥ 40%; F2 = acurácia ≥ FedAvg − 2 pp. results/fase2/FINAL.md</p>
+<aside>Este é o teste final, com sementes que eu não usei para desenvolver nada, e com os critérios fixados antes. A defesa combinada falhou no critério principal: 4 de 9 casos. O LP com ruído passa em todas as três sementes de teste. Pixel e DBA caem em quatro dos seis casos; nos outros dois, o curioso é que o Neural Cleanse funciona sobre o modelo do FedAvg, mas não sobre o do LayerGuard. A acurácia sem ataque fica dentro do limite. Olhando as seis sementes juntas, nenhum método que testamos, nem o nosso nem o FedSurrogate, barra o LP de forma confiável com não-IID severo.</aside>
+</section>
+
+<section id="f2extra" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:112px 128px 150px;display:flex;flex-direction:column;gap:30px">
+<div style="display:flex;flex-direction:column;gap:10px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#2B5C9E;font-weight:600">Fase 2 · confirmações (treinos complementares, 61 no total)</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:54px;font-weight:600;line-height:1.12;color:#14213D">Os treinos complementares confirmam a conclusão</h2>
+</div>
+<table style="width:1664px;font-size:23px;color:#2A3346">
+<tr><th style="width:44%;text-align:left">cenário · ASR (acurácia)</th><th style="text-align:right">FedAvg</th><th style="text-align:right">defesa</th><th style="width:30%;text-align:left;padding-left:32px">leitura</th></tr>
+<tr style="background:#F6E3D7"><td>FedSurrogate, LP dos autores, <b>α = 0,5</b> (condição do artigo deles)</td><td style="text-align:right">28,4% (72%)</td><td style="text-align:right;color:#A9481A"><b>66,4% (68%)</b></td><td style="padding-left:32px">amplifica; o 1,08% do artigo não se reproduz</td></tr>
+<tr><td>FedSurrogate sem ataque, α = 0,1, semente 42</td><td style="text-align:right">69%</td><td style="text-align:right;color:#A9481A">56,6%</td><td style="padding-left:32px">−12 pp só pela defesa</td></tr>
+<tr><td>FedSurrogate, LP dos autores / LP evasivo, α = 0,1, s42</td><td style="text-align:right">79,7 / 73,5%</td><td style="text-align:right">19,5 / 22,8%</td><td style="padding-left:32px">reduz, mas acima de 10% e a 55%</td></tr>
+<tr><td>Multi-Krum, LP + ruído, sementes 44 / 45</td><td style="text-align:right">58,5 / 72,4%</td><td style="text-align:right">72,2 / 8,3% (50 / 49%)</td><td style="padding-left:32px">amplifica na 44; barra na 45 a −17 pp</td></tr>
+<tr><td>FLAME, LP + ruído, sementes 44 / 45</td><td style="text-align:right">58,5 / 72,4%</td><td style="text-align:right">59,4 / 0,2% (41 / 36%)</td><td style="padding-left:32px">barra na 45 a −30 pp</td></tr>
+<tr><td>Poda no round 30 (fedavg_prune): LP s45 / pixel / DBA s42</td><td style="text-align:right">72 / 97 / 48%</td><td style="text-align:right">68 / 97 / 35%</td><td style="padding-left:32px">falha (critério: ≤ 10%)</td></tr>
+<tr><td>NC-U após a poda: pixel / DBA s42</td><td style="text-align:right">—</td><td style="text-align:right;color:#2B5C9E"><b>1,1 / 0,6%</b></td><td style="padding-left:32px">NC-U segue resolvendo</td></tr>
+</table>
+<div style="border-left:6px solid #2B5C9E;padding:4px 0 4px 24px"><p style="font-size:25px;line-height:1.45"><b>Diagnóstico nas sementes de teste 46–48:</b> L* com 4–6 tensores em todas; escore médio dos atacantes 0,2–2,3 (limiar 3); a melhor regra alternativa marca no máximo 17% de L* e, nesse ponto, 23% dos honestos. A explicação do slide 34 vale fora da amostra.</p></div>
+<p style="position:absolute;left:128px;bottom:56px;width:1664px;font-size:22px;color:#6B7385">37 · results/layer_profile/ANALISE.md ("Treinos opcionais da fila") · results/fase2/diag_test.txt · FedSurrogate reimplementado pelo texto (sem código dos autores)</p>
+<aside>Depois do teste principal, rodei os treinos complementares que estavam na fila. O dado mais forte é o do FedSurrogate na condição do próprio artigo deles, com não-IID moderado: o backdoor ficou em 66%, mais que os 28% sem defesa. Como é uma reimplementação pelo texto, trato com cautela, mas é consistente com o que vimos no Multi-Krum: defesas que descartam clientes acabam favorecendo o LP, que simula a defesa. Multi-Krum e FLAME só barram quando perdem 17 a 30 pontos de acurácia. E o diagnóstico de por que o LayerGuard falha se repete nas três sementes de teste.</aside>
+</section>
+
+<section id="f2next" data-transition="fade" style="background:#ECE8DF;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:44px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A9481A;font-weight:600">Depois da Fase 2 · decisão do orientador</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:58px;font-weight:600;line-height:1.12;color:#14213D">Três direções possíveis para o artigo</h2>
+</div>
+<div style="display:flex;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#14213D;border-radius:12px;padding:36px">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:56px;font-weight:600;color:#E07A45;line-height:1">a</p>
+<h3 style="font-size:32px;font-weight:600;color:#F7F5F0;line-height:1.2">Estudo de avaliação com resultado negativo</h3>
+<p style="font-size:25px;line-height:1.45;color:#C9D2E3">O LP evasivo escapa de defesas por atualização, por camada e por inversão de gatilho com não-IID severo; uma semente só superestima as defesas. Os dados já existem.</p>
+<p style="font-size:24px;font-weight:600;color:#14213D;background:#F0A070;border-radius:24px;padding:8px 20px">2–4 dias de escrita · recomendada</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#F7F5F0;border-radius:12px;padding:36px">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:56px;font-weight:600;color:#E07A45;line-height:1">b</p>
+<h3 style="font-size:32px;font-weight:600;color:#14213D;line-height:1.2">Nova defesa no modelo contra o LP</h3>
+<p style="font-size:25px;line-height:1.45">Sinal que não dependa de máscara pequena: inversão no espaço de características ou sondagem dos tensores de L*.</p>
+<p style="font-size:24px;font-weight:600;color:#F7F5F0;background:#A9481A;border-radius:24px;padding:8px 20px">dias a semanas · sem garantia</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#F7F5F0;border-radius:12px;padding:36px">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:56px;font-weight:600;color:#E07A45;line-height:1">c</p>
+<h3 style="font-size:32px;font-weight:600;color:#14213D;line-height:1.2">Ampliar a robustez</h3>
+<p style="font-size:25px;line-height:1.45">Mais sementes, FMNIST, o atacante do artigo do FLAME (1 em 10) e o ataque LSA (ICC 2026). Combina com (a).</p>
+<p style="font-size:24px;font-weight:600;color:#F7F5F0;background:#2B5C9E;border-radius:24px;padding:8px 20px">~45 min de máquina por semente</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">38 · Estado e retomada: fl-robustness-lab/results/fase2/ESTADO.md · rascunho reenquadrado: results/final_lab/ARTIGO_rascunho.md (§8)</p>
+<aside>A minha recomendação é a opção a: escrever agora o estudo de avaliação, que já tem todos os dados, com sementes de desenvolvimento e de teste separadas, o diagnóstico de por que as defesas falham e a divisão em duas classes de ataque. A opção c pode reforçar a a em paralelo, porque as sementes extras rodam sozinhas. A opção b é a mais arriscada: exige uma ideia nova para enxergar o LP no modelo, e não temos indício de que funcione.</aside>
+</section>
+
+<section id="riscos" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:44px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A9481A;font-weight:600">Para ser publicável</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">Riscos e como mitigá-los</h2>
+</div>
+<table style="width:1664px;font-size:26px;color:#2A3346">
+<tr><th style="width:36%;text-align:left">Risco</th><th style="width:64%;text-align:left">Mitigação</th></tr>
+<tr><td><b>Novidade:</b> <span style="color:#A9481A">FedSurrogate (mai/2026) já decide por camada</span></td><td>ele vira linha de base (slide 33); a contribuição passa a ser a avaliação com sementes separadas e o diagnóstico</td></tr>
+<tr><td><b>Atacante adaptativo:</b> <span style="color:#2B5C9E">ruído em L* contido em 16/10</span></td><td>só na semente 42; nas outras 5 o ruído passa (slides 34 e 36)</td></tr>
+<tr><td><b>Premissa:</b> <span style="color:#A9481A">FLAME barra o LP no repositório (4 de 5), mas o amplifica no laboratório (93%)</span></td><td>repetir no laboratório com o atacante do artigo (1 em 10, sem ver os honestos) para isolar a diferença; relatar as duas condições</td></tr>
+<tr><td><b>Hardware:</b> MX450 com 2 GB</td><td>CNN e ResNet20; triagem com 15 rounds; runs longos só na matriz final</td></tr>
+<tr><td><b>Variância:</b> <span style="color:#A9481A">defesas contra o LP falham entre sementes</span></td><td>acúmulo no tempo testado e refutado (slide 34); usar sementes de desenvolvimento e de teste separadas em tudo</td></tr>
+<tr><td><b>Escopo:</b> <span style="color:#A9481A">pixel, PGD e DBA passam</span></td><td>resolvido com dados no servidor: NC-U zera pixel e DBA em 6 de 6 (slide 35); PGD só parcialmente</td></tr>
+</table>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">39 · Atualizado com a Fase 2 (16/10, tarde)</p>
+<aside>Depois da Fase 2, dois riscos se confirmaram: já existe uma defesa por camada publicada, o FedSurrogate, e as defesas contra o LP não se sustentam entre sementes. Um risco se resolveu: os backdoors treinados em separado, pixel e DBA, caem com a inversão de gatilho no servidor. Isso muda o que o artigo pode afirmar.</aside>
+</section>
+
+<section id="fecho" data-transition="fade" style="background:#14213D;color:#C9D2E3;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:48px">
+<div style="position:absolute;left:0;top:0;width:24px;height:1080px;background:#E07A45"></div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#F0A070;font-weight:600">Fechamento</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#F7F5F0">Contribuições possíveis depois da Fase 2</h2>
+</div>
+<div style="display:flex;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;border-top:4px solid #E07A45;padding-top:24px">
+<h3 style="font-size:32px;font-weight:600;color:#F7F5F0">Um resultado negativo</h3>
+<p style="font-size:26px;line-height:1.45">Com não-IID severo, o LP com ruído escapa de LayerGuard, FedSurrogate e Neural Cleanse em 6 sementes; uma semente só engana.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;border-top:4px solid #E07A45;padding-top:24px">
+<h3 style="font-size:32px;font-weight:600;color:#F7F5F0">Uma explicação</h3>
+<p style="font-size:26px;line-height:1.45">Por que falha: o veneno se espalha em 3–6 tensores e some na heterogeneidade. Backdoors treinados em separado: inversão de gatilho resolve.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;border-top:4px solid #E07A45;padding-top:24px">
+<h3 style="font-size:32px;font-weight:600;color:#F7F5F0">Um benchmark</h3>
+<p style="font-size:26px;line-height:1.45">Reprodutível: 13 ataques, 10 defesas, sinais por camada e a explicação de cada decisão.</p>
+</div>
+</div>
+<div style="flex:1"></div>
+<div style="display:flex;flex-direction:column;gap:16px;background:#1E2E52;border-radius:12px;padding:32px 40px">
+<h3 style="font-size:30px;font-weight:600;color:#F0A070">Decisões para hoje</h3>
+<p style="font-size:26px;line-height:1.45;color:#F7F5F0">1. Direção: (a) artigo de avaliação com resultado negativo, com os dados atuais; (b) nova defesa no modelo para o LP; (c) mais sementes, FMNIST e ataques novos.<br>2. Evento ou periódico alvo para o M11.</p>
+</div>
+<aside>Com a Fase 2, a defesa como contribuição principal não se sustenta. O que se sustenta é um resultado negativo bem medido, com sementes de desenvolvimento e de teste separadas, a explicação de por que as defesas falham, e o benchmark. A decisão para o orientador é a direção: escrever o estudo de avaliação agora, tentar uma nova defesa no modelo, ou ampliar a robustez antes.</aside>
+</section>
+</div><div id="n"></div><script>
+const S=[...document.querySelectorAll('section')];let i=Math.max(0,Math.min(S.length-1,(+location.hash.slice(1)||1)-1));
+function fit(){const k=Math.min(innerWidth/1920,innerHeight/1080);document.getElementById('stage').style.transform=`translate(-50%,-50%) scale(${k})`}
+function go(j){i=Math.max(0,Math.min(S.length-1,j));S.forEach((s,t)=>s.classList.toggle('on',t===i));document.getElementById('n').textContent=(i+1)+' / '+S.length;history.replaceState(null,'','#'+(i+1))}
+addEventListener('resize',fit);addEventListener('keydown',e=>{if(['ArrowRight','PageDown',' '].includes(e.key))go(i+1);else if(['ArrowLeft','PageUp'].includes(e.key))go(i-1);
+else if(e.key==='n'||e.key==='N')document.body.classList.toggle('notes');else if(e.key==='f'||e.key==='F')document.documentElement.requestFullscreen?.();else if(e.key==='Home')go(0);else if(e.key==='End')go(S.length-1)});
+addEventListener('click',e=>go(e.clientX>innerWidth/3?i+1:i-1));fit();go(i);
+</script></body></html>

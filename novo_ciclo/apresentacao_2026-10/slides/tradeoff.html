@@ -1,0 +1,26 @@
+<section id="tradeoff" data-transition="fade" style="background:#14213D;color:#C9D2E3;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#F0A070;font-weight:600">O resultado central</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#F7F5F0">Encurralar o atacante adaptativo</h2>
+</div>
+<div style="display:flex;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;background:#1E2E52;border-radius:12px;padding:36px">
+<h3 style="font-size:32px;font-weight:600;color:#F7F5F0">Concentrar</h3>
+<p style="font-size:26px;line-height:1.45">Poucas camadas, λ alto. Visto pela concentração e pelo perfil por camada.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;background:#1E2E52;border-radius:12px;padding:36px">
+<h3 style="font-size:32px;font-weight:600;color:#F7F5F0">Espalhar</h3>
+<p style="font-size:26px;line-height:1.45">Muitas camadas. Visto pelas normas e pelo Mahalanobis, que já dão 0,95 contra o LP atual.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;background:#1E2E52;border-radius:12px;padding:36px">
+<h3 style="font-size:32px;font-weight:600;color:#F7F5F0">Diluir</h3>
+<p style="font-size:26px;line-height:1.45">λ baixo. Pode passar, mas o backdoor enfraquece. Na CNN do artigo, λ acima de 0,6 já é pego pelo FLAME.</p>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;border-left:6px solid #E07A45;padding:8px 0 8px 32px">
+<p style="font-size:30px;line-height:1.45;color:#F7F5F0"><b>Figura principal do artigo:</b> sucesso do backdoor × aceitação dos maliciosos, varrendo λ e o tamanho de L*, para cada defesa.</p>
+<p style="font-size:26px;line-height:1.45">Meta: nenhuma configuração do LP no canto “aceito e eficaz”.</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#9AA6BF">16 · λ: Zhuang et al., 2024, §5.4 (melhor λ = 0,5 na CNN; detectado acima de 0,6 no FLAME e de 0,7 no Multi-Krum)</p>
+<aside>É isso que separa um trabalho incremental de um relevante: não basta mostrar que detectamos o LP como ele é publicado. É preciso mostrar que, mesmo sabendo da defesa, o atacante não encontra um ponto de operação que seja ao mesmo tempo aceito e eficaz. O artigo do LP já dá a régua: com FLAME, o limite é λ de 0,6 na CNN. Se a nossa defesa baixar esse limite a ponto de o backdoor não funcionar, temos o resultado.</aside>
+</section>

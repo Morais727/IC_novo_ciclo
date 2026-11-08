@@ -1,0 +1,20 @@
+<section id="res11" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A9481A;font-weight:600">Resultados de 16/10 · o que não funciona e por quê</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:58px;font-weight:600;line-height:1.12;color:#14213D">Backdoors treinados em separado não deixam rastro nas atualizações</h2>
+</div>
+<div style="display:flex;gap:40px">
+<div style="flex:1;display:flex;flex-direction:column;gap:22px">
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px"><p style="font-size:25px;line-height:1.45"><b>Diagnóstico:</b> Krum, norma, sinais por tensor e acúmulo ao longo dos rounds — nenhum separa pixel, PGD ou DBA dos honestos com α = 0,1.</p></div>
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px"><p style="font-size:25px;line-height:1.45"><b>Por quê:</b> os clientes mais anômalos são honestos com dados de uma classe só. Um backdoor treinado em separado parece um deles.</p></div>
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px"><p style="font-size:25px;line-height:1.45"><b>As outras defesas também não:</b> Multi-Krum e FLAME barram o pixel descartando honestos (−15 e −28 pp) e amplificam PGD e DBA.</p></div>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:22px">
+<div style="border-left:6px solid #2B5C9E;padding:4px 0 4px 24px"><p style="font-size:25px;line-height:1.45"><b>Tentativa refutada:</b> cortar a norma por tensor (v1) custou 3 pp e não barrou nenhum dos três.</p></div>
+<div style="border-left:6px solid #2B5C9E;padding:4px 0 4px 24px"><p style="font-size:25px;line-height:1.45"><b>Enquadramento do artigo:</b> decidir por tensor resolve a classe "parte construída e compartilhada" (LP) e os ataques de modelo; a classe "treinada em separado" pede outra fonte de informação (dados no servidor, sondas).</p></div>
+<div style="border-left:6px solid #2B5C9E;padding:4px 0 4px 24px"><p style="font-size:25px;line-height:1.45"><b>Rascunho:</b> results/final_lab/ARTIGO_rascunho.md.</p></div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">32 · experiments/diag_separate_backdoors.py (agregação oráculo, 10 rounds) e experiments/final_lab.py</p>
+<aside>Este é o limite do método, e também um resultado. Com não-IID severo, os clientes honestos mais estranhos são os que têm dados de quase uma classe só, e um atacante que treina o próprio backdoor fica parecido com eles. Testamos todos os sinais que tínhamos, inclusive acumulando ao longo dos rounds, e nenhum separa. As defesas por cliente só barram o pixel porque descartam muitos honestos, e pioram PGD e DBA. Por isso o artigo separa duas classes: o que é construído e compartilhado, como o LP e os ataques de modelo, que decidir por tensor resolve sem custo; e o que é treinado em separado, que precisa de outra informação, como dados no servidor ou sondas com gatilho.</aside>
+</section>

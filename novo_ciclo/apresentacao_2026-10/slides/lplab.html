@@ -1,0 +1,36 @@
+<section id="lplab" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A9481A;font-weight:600">O alvo · no nosso laboratório</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">Nosso LP já funciona e já é parcialmente visível</h2>
+</div>
+<div style="display:flex;gap:56px;align-items:start">
+<div style="width:700px;display:flex;flex-direction:column;gap:32px">
+<div style="display:flex;gap:32px">
+<div style="flex:1;border-left:6px solid #E07A45;padding:4px 0 4px 24px">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:80px;font-weight:600;color:#14213D;line-height:1.05">50%</p>
+<p style="font-size:24px">sucesso do backdoor (base 2,5%)</p>
+</div>
+<div style="flex:1;border-left:6px solid #E07A45;padding:4px 0 4px 24px">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:80px;font-weight:600;color:#14213D;line-height:1.05">−0,2</p>
+<p style="font-size:24px">p.p. de acurácia: furtivo</p>
+</div>
+</div>
+<p style="font-size:26px;line-height:1.45">Camadas críticas escolhidas: <b>fc1</b> e <b>conv3</b> (64 e 61 de 80 escolhas), o mesmo padrão do artigo.</p>
+<p style="font-size:26px;line-height:1.45">Detecção: proposta com recall <b>0,77</b> e 13% de FP; RAGNAR-4 com recall 0,43.</p>
+</div>
+<table style="flex:1;font-size:28px;color:#2A3346">
+<tr><th style="width:70%;text-align:left">Sinal no LP</th><th style="width:30%;text-align:right">AUC</th></tr>
+<tr><td>fc1, distância à mediana</td><td style="text-align:right"><b>0,97</b></td></tr>
+<tr><td>Mahalanobis</td><td style="text-align:right"><b>0,95</b></td></tr>
+<tr><td>norma L3 à média</td><td style="text-align:right">0,94</td></tr>
+<tr><td>cosseno à mediana</td><td style="text-align:right">0,88</td></tr>
+<tr><td>perda no holdout limpo</td><td style="text-align:right;color:#A9481A"><b>0,54</b></td></tr>
+</table>
+</div>
+<div style="display:flex;gap:20px;align-items:center;background:#14213D;border-radius:12px;padding:28px 36px">
+<x-icon name="Warning" style="color:#F0A070;width:44px;height:44px"></x-icon>
+<p style="font-size:26px;line-height:1.4;color:#F7F5F0">Ressalva: sem λ e sem modelo médio, este é o LP mais fácil de pegar. O holdout limpo não vê o backdoor (0,54).</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">10 · FedAvg, 40 rounds (efeito) e 15 rounds com agregação oráculo (sinais), 2 atacantes em 20, semente 42</p>
+<aside>Dois pontos. Primeiro, o fato de a distância na fc1 separar o LP (0,97) é exatamente o que o artigo previa: a camada linear se destaca. Segundo, o holdout limpo não ajuda contra backdoor, porque o modelo envenenado continua acertando imagens sem gatilho. Isso motiva uma sonda no servidor que não dependa de conhecer o gatilho.</aside>
+</section>

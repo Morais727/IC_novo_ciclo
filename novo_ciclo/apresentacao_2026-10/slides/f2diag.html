@@ -1,0 +1,20 @@
+<section id="f2diag" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A9481A;font-weight:600">Fase 2 · por que o LayerGuard falha nas réplicas</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:58px;font-weight:600;line-height:1.12;color:#14213D">Fora da semente 42, o LP com ruído não deixa rastro nas atualizações</h2>
+</div>
+<div style="display:flex;gap:40px">
+<div style="flex:1;display:flex;flex-direction:column;gap:22px">
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px"><p style="font-size:25px;line-height:1.45"><b>A semente 42 era a fácil:</b> lá o Multi-Krum simulado pelo atacante rejeitava as camadas críticas e o L* encolhia para um tensor só (fc1.weight). Nas 44/45, L* fica com 3 a 6 tensores.</p></div>
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px"><p style="font-size:25px;line-height:1.45"><b>Escores:</b> nas 44/45 nenhum atacante passa de 3 em nenhum tensor de L*; a parte maliciosa de cada tensor é pequena perto da heterogeneidade honesta.</p></div>
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px"><p style="font-size:25px;line-height:1.45"><b>Similaridade:</b> o cosseno entre os dois atacantes (0,13–0,41) é igual ao dos honestos com classes parecidas (p95 0,38–0,70).</p></div>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:22px">
+<div style="border-left:6px solid #2B5C9E;padding:4px 0 4px 24px"><p style="font-size:25px;line-height:1.45"><b>Regras testadas fora do circuito</b> (limiar menor, média exponencial, soma por cliente, evidência por par ao longo dos rounds): nenhuma marca ≥ 50% de L* com ≤ 5% de honestos nas três sementes.</p></div>
+<div style="border-left:6px solid #2B5C9E;padding:4px 0 4px 24px"><p style="font-size:25px;line-height:1.45"><b>Evidência por par:</b> o par de atacantes fica em 1º de 190 na semente 44, mas em 13º na 42 e 15º na 45.</p></div>
+<div style="background:#14213D;border-radius:12px;padding:24px 28px"><p style="font-size:25px;line-height:1.45;color:#F7F5F0"><b style="color:#F0A070">Conclusão (H5):</b> com α = 0,1, o LP evasivo com ruído é tão inseparável pelas atualizações quanto os backdoors treinados em separado. Nenhuma correção por estatística foi para o circuito fechado. Confirmado depois nas sementes de teste (slide 37).</p></div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">34 · lg_shadow (registro por round, tensor e cliente) · experiments/fase2_diag.py e fase2_analyze.py · sementes 42, 44, 45</p>
+<aside>Antes de tentar consertar, medi por que a defesa falhava. Rodei uma versão sombra do LayerGuard que agrega como o FedAvg mas registra todos os escores. A semente 42 tinha uma particularidade: o atacante, ao simular o Multi-Krum, acabava envenenando um único tensor, e aí a assinatura fica forte. Nas outras sementes ele espalha o veneno em três a seis tensores, e em cada um a parte maliciosa some no meio da diferença natural entre honestos. Testei quatro regras alternativas nos registros, sem rodar treino, e nenhuma passou no critério. Por isso não levei nenhuma delas adiante.</aside>
+</section>

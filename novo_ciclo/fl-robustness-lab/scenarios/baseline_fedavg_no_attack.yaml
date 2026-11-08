@@ -1,0 +1,15 @@
+name: baseline_fedavg_no_attack
+num_clients: 20
+dirichlet_alpha: 0.5
+num_malicious: 0
+attack: none
+attack_params: {}
+defense: fedavg
+defense_params: {}
+rounds: 40
+local_epochs: 1
+batch_size: 32
+lr: 0.01
+server_holdout_size: 100
+seed: 42
+eval_every: 5

@@ -1,0 +1,29 @@
+<section id="res9" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:36px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A9481A;font-weight:600">Resultados de 15/10 · H4</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">Um atacante que soma ruído em L* foge sem perder o backdoor</h2>
+</div>
+<div style="display:flex;gap:48px;align-items:start">
+<table style="width:1150px;font-size:24px;color:#2A3346">
+<tr><th style="width:16%;text-align:left">ruído ν</th><th style="text-align:right">AUC similaridade</th><th style="text-align:right">AUC norma</th><th style="text-align:right">ASR FedAvg</th><th style="text-align:right">ASR por tensor</th></tr>
+<tr><td>0</td><td style="text-align:right">0,94</td><td style="text-align:right">—</td><td style="text-align:right">70,0%</td><td style="text-align:right;color:#2B5C9E">3,7%</td></tr>
+<tr><td>0,5</td><td style="text-align:right">0,91</td><td style="text-align:right">0,64</td><td style="text-align:right">69,7%</td><td style="text-align:right;color:#2B5C9E">5,3%</td></tr>
+<tr style="background:#F6E3D7"><td><b>1</b></td><td style="text-align:right;color:#A9481A"><b>0,65</b></td><td style="text-align:right;color:#A9481A"><b>0,80</b></td><td style="text-align:right">68,4%</td><td style="text-align:right;color:#A9481A"><b>71,8%</b></td></tr>
+<tr><td>2</td><td style="text-align:right;color:#A9481A">0,63</td><td style="text-align:right">0,96</td><td style="text-align:right">68,2%</td><td style="text-align:right;color:#A9481A">73,0%</td></tr>
+<tr><td>4</td><td style="text-align:right;color:#A9481A">0,62</td><td style="text-align:right">0,99</td><td style="text-align:right">67,8%</td><td style="text-align:right;color:#A9481A">70,3%</td></tr>
+</table>
+<div style="flex:1;display:flex;flex-direction:column;gap:22px">
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px">
+<p style="font-size:24px;line-height:1.45"><b>H4 refutada:</b> com ν ≥ 1 o sinal cai para ~0,63 e o backdoor continua em ~70%. Fugir não custa nada ao atacante.</p>
+</div>
+<div style="border-left:6px solid #2B5C9E;padding:4px 0 4px 24px">
+<p style="font-size:24px;line-height:1.45"><b>Pista:</b> o ruído infla a norma do tensor; a norma pega ν ≥ 2 (0,96–0,99). Com ν = 1 o atacante escapa dos dois sinais.</p>
+</div>
+<div style="border-left:6px solid #2B5C9E;padding:4px 0 4px 24px">
+<p style="font-size:24px;line-height:1.45"><b>Próximo:</b> combinar similaridade e norma por tensor, com critério fixado antes.</p>
+</div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">29 · Ruído gaussiano independente por atacante em L*, norma = ν × componente maliciosa. AUC: agregação oráculo, 15 rounds; ASR: ciclo fechado, 40 rounds, α = 0,1, semente 42</p>
+<aside>A H4 dizia que, para fugir da comparação por tensor, o atacante teria de sacrificar o backdoor. Não é o que acontece. Cada atacante soma ruído próprio na camada envenenada; como o ruído é independente, os dois deixam de se parecer, mas na média do servidor o ruído se dilui e a parte envenenada continua lá. Com ruído do tamanho da parte maliciosa, a detecção cai para 0,65 e o backdoor passa em 72% mesmo com a nossa defesa. O lado bom é que o ruído tem um custo visível: ele infla a norma daquele tensor, e a norma por tensor pega o ruído grande quase perfeitamente. O ponto fraco é o ruído de tamanho médio, ν = 1, que escapa dos dois sinais. O próximo teste combina similaridade e norma por tensor, com o critério fixado antes.</aside>
+</section>

@@ -1,0 +1,28 @@
+<section id="res5" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:44px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#2B5C9E;font-weight:600">Resultados de 12/10 · H3</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">O efeito do backdoor está na atualização, mas manchas sorteadas não o acham</h2>
+</div>
+<div style="display:flex;gap:56px;align-items:start">
+<table style="width:1040px;font-size:26px;color:#2A3346">
+<tr><th style="width:46%;text-align:left">AUC com α = 0,1</th><th style="width:27%;text-align:right">LP completo</th><th style="width:27%;text-align:right">pixel</th></tr>
+<tr style="background:#F6DFCF"><td><b>sonda: 64 manchas sorteadas (H3)</b></td><td style="text-align:right;color:#A9481A"><b>0,44</b></td><td style="text-align:right;color:#A9481A"><b>0,51</b></td></tr>
+<tr><td>sonda com w + 5·delta</td><td style="text-align:right">0,74</td><td style="text-align:right">0,62</td></tr>
+<tr><td>oráculo: só o gatilho real</td><td style="text-align:right"><b>0,83</b></td><td style="text-align:right"><b>0,94</b></td></tr>
+<tr><td>oráculo: classe apontada = alvo</td><td style="text-align:right">100%</td><td style="text-align:right">100%</td></tr>
+</table>
+<div style="flex:1;display:flex;flex-direction:column;gap:24px">
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px">
+<p style="font-size:25px;line-height:1.45"><b>H3 refutada:</b> 0,44 contra o critério de &gt; 0,70. DBA também fica em 0,50.</p>
+</div>
+<div style="border-left:6px solid #2B5C9E;padding:4px 0 4px 24px">
+<p style="font-size:25px;line-height:1.45"><b>Mas o sinal existe:</b> com o gatilho certo, um round basta, justamente onde a geometria falha.</p>
+</div>
+<div style="border-left:6px solid #2B5C9E;padding:4px 0 4px 24px">
+<p style="font-size:25px;line-height:1.45"><b>Próximo:</b> buscar a menor mancha que empurra o modelo do cliente para uma classe.</p>
+</div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">23 · experiments/probe_h3.py, critério fixado antes. Oráculo = diagnóstico com o gatilho real (teto, não detector). 15 rounds, agregação oráculo, semente 42</p>
+<aside>A sonda colou 64 manchas aleatórias nas 100 imagens do holdout e mediu, para cada cliente, o maior aumento de probabilidade de alguma classe, descontando o mesmo efeito no modelo global. Ela não separou nenhum backdoor com α = 0,1: LP completo 0,44, LP simplificado 0,51, pixel 0,51, DBA 0,50. O diagnóstico oráculo usa a mesma medida com o gatilho real e chega a 0,83 no LP completo e 0,94 no pixel, sempre apontando a classe-alvo. Ou seja, a atualização de um round carrega o backdoor mesmo com não-IID severo; o que falhou foi o sorteio das manchas. A busca otimizada, no estilo do Neural Cleanse, é o próximo teste. O custo por round é maior e precisa ser medido, e gatilhos semânticos (Edge-case) ou distribuídos (DBA) podem não ter uma mancha pequena equivalente.</aside>
+</section>

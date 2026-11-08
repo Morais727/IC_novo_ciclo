@@ -1,0 +1,35 @@
+<section id="arquitetura" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A9481A;font-weight:600">A proposta</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">Seis componentes, uma decisão por camada</h2>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:28px">
+<div style="display:flex;flex-direction:column;gap:12px;background:#FFFDF9;border:1px solid #E2DDD2;border-top:6px solid #2B5C9E;border-radius:12px;padding:28px">
+<h3 style="font-size:30px;font-weight:600;color:#14213D">1 · Perfil por camada</h3>
+<p style="font-size:24px;line-height:1.45">z robusto de cada sinal, em cada camada, dentro do round. Gera uma matriz camadas × sinais por cliente.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#FFFDF9;border:1px solid #E2DDD2;border-top:6px solid #E07A45;border-radius:12px;padding:28px">
+<h3 style="font-size:30px;font-weight:600;color:#14213D">2 · Concentração</h3>
+<p style="font-size:24px;line-height:1.45">Quanto do desvio do cliente cabe em poucas camadas. O LP concentra; a variação honesta se espalha.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#FFFDF9;border:1px solid #E2DDD2;border-top:6px solid #2B5C9E;border-radius:12px;padding:28px">
+<h3 style="font-size:30px;font-weight:600;color:#14213D">3 · Heterogeneidade</h3>
+<p style="font-size:24px;line-height:1.45">Desconta o desvio explicado pela distribuição de rótulos (subespaço honesto, como no BOBA) antes de acusar.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#FFFDF9;border:1px solid #E2DDD2;border-top:6px solid #E07A45;border-radius:12px;padding:28px">
+<h3 style="font-size:30px;font-weight:600;color:#14213D">4 · Sonda sem gatilho</h3>
+<p style="font-size:24px;line-height:1.45">No holdout, aplica manchas aleatórias: a atualização torna o modelo sensível a padrões pequenos rumo a uma classe?</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#FFFDF9;border:1px solid #E2DDD2;border-top:6px solid #2B5C9E;border-radius:12px;padding:28px">
+<h3 style="font-size:30px;font-weight:600;color:#14213D">5 · Memória</h3>
+<p style="font-size:24px;line-height:1.45">CUSUM ou reputação: o LP precisa repetir o envenenamento para o backdoor não decair.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#14213D;border:1px solid #14213D;border-top:6px solid #E07A45;border-radius:12px;padding:28px">
+<h3 style="font-size:30px;font-weight:600;color:#F7F5F0">6 · Resposta cirúrgica</h3>
+<p style="font-size:24px;line-height:1.45;color:#C9D2E3">Anula só as camadas suspeitas e explica: “cliente 7, conv3, distância à mediana com z = 5,1”.</p>
+</div>
+</div>
+<p style="font-size:26px;line-height:1.4;color:#3D4657"><b>Entra:</b> atualizações do round, modelo global, holdout de 100 amostras, histórico. <b>Sai:</b> aceitar, anular camadas ou excluir, com a explicação.</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">13 · Evolução da regra do M3: mesma normalização no round, agora com resolução de camada. O exemplo de explicação é ilustrativo</p>
+<aside>Os componentes 1 e 5 já existem em parte no M3 (z robusto, CUSUM). O novo está em 2, 3, 4 e 6. O componente 2 responde ao Apêndice 14 do LP: o Multi-Krum por camada olha uma camada de cada vez e cada convolução crítica desvia pouco; a concentração olha o padrão conjunto. O 6 reduz o custo de um falso positivo: um honesto marcado perde só a camada suspeita naquele round, não a contribuição inteira.</aside>
+</section>

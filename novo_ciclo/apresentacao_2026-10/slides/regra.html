@@ -1,0 +1,29 @@
+<section id="regra" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A9481A;font-weight:600">O que aprendemos · 3</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">A regra sem treino detecta mais que o RAGNAR, também fora da amostra</h2>
+</div>
+<div style="display:flex;gap:56px;align-items:start">
+<table style="width:1080px;font-size:28px;color:#2A3346">
+<tr><th style="width:40%;text-align:left">Regra</th><th style="width:20%;text-align:right">AUC</th><th style="width:20%;text-align:right">Recall</th><th style="width:20%;text-align:right">Falsos pos.</th></tr>
+<tr style="background:#ECE8DF"><td><b>8 ataques do desenho</b></td><td></td><td></td><td></td></tr>
+<tr><td>Mesma regra, 4 features RAGNAR</td><td style="text-align:right">0,78</td><td style="text-align:right">0,37</td><td style="text-align:right">5%</td></tr>
+<tr><td><b>Proposta</b></td><td style="text-align:right"><b>0,95</b></td><td style="text-align:right"><b>0,86</b></td><td style="text-align:right">9%</td></tr>
+<tr style="background:#ECE8DF"><td><b>5 ataques novos (fora da amostra)</b></td><td></td><td></td><td></td></tr>
+<tr><td>Mesma regra, 4 features RAGNAR</td><td style="text-align:right">0,70</td><td style="text-align:right">0,34</td><td style="text-align:right">9%</td></tr>
+<tr><td><b>Proposta</b></td><td style="text-align:right"><b>0,88</b></td><td style="text-align:right"><b>0,72</b></td><td style="text-align:right">15%</td></tr>
+<tr><td>Proposta + sinais de conluio</td><td style="text-align:right">0,93</td><td style="text-align:right">0,85</td><td style="text-align:right">15%</td></tr>
+</table>
+<div style="flex:1;display:flex;flex-direction:column;gap:24px">
+<h3 style="font-size:30px;font-weight:600;color:#14213D">Como a regra decide</h3>
+<ol style="font-size:26px;line-height:1.45;color:#3D4657">
+<li>z robusto de cada sinal dentro do round (mediana e MAD)</li>
+<li>evidência uni ou bilateral, fixada por sinal</li>
+<li>escore = máximo das evidências; o sinal vencedor é a explicação</li>
+<li>exclui se escore &gt; 3, no máximo metade dos clientes</li>
+</ol>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">06 · experiments/detection_logic.py sobre os sinais coletados; recall e FP por par (cliente, round). Regra congelada antes dos 5 ataques novos existirem</p>
+<aside>O ganho maior está onde o RAGNAR-4 não via nada: LIE, MinMax e MinSum (recall 0 para 0,87 a 0,93) e backdoor PGD (0,10 para 1,00). Fora da amostra a proposta cai de 0,95 para 0,88 de AUC: essa queda mostra quanto do número do desenho vinha de a regra ter sido feita com os mesmos dados. Os falsos positivos de 15% são o ponto fraco.</aside>
+</section>

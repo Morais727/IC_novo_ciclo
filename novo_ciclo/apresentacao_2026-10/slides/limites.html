@@ -1,0 +1,34 @@
+<section id="limites" data-transition="fade" style="background:#ECE8DF;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A9481A;font-weight:600">O que aprendemos · 4</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">O que esses números ainda não provam</h2>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:28px">
+<div style="display:flex;flex-direction:column;gap:12px;background:#F7F5F0;border-radius:12px;padding:32px">
+<h3 style="font-size:30px;font-weight:600;color:#14213D">Agregação oráculo</h3>
+<p style="font-size:26px;line-height:1.45">O filtro mede, mas não age: não há efeito da exclusão sobre o modelo seguinte.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#F7F5F0;border-radius:12px;padding:32px">
+<h3 style="font-size:30px;font-weight:600;color:#14213D">Pouca variação</h3>
+<p style="font-size:26px;line-height:1.45">15 rounds, uma semente, um cenário (α = 0,5). Sem estimativa de variância.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#F7F5F0;border-radius:12px;padding:32px">
+<h3 style="font-size:30px;font-weight:600;color:#14213D">Falsos positivos</h3>
+<p style="font-size:26px;line-height:1.45">15% fora da amostra com limiar fixo. O Mimic chega a 29%.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#F7F5F0;border-radius:12px;padding:32px;border:3px solid #E07A45">
+<h3 style="font-size:30px;font-weight:600;color:#14213D">LP incompleto</h3>
+<p style="font-size:26px;line-height:1.45">Sem λ adaptativo e sem modelo médio, justamente o que no artigo leva a aceitação de 51% para 93%.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#F7F5F0;border-radius:12px;padding:32px">
+<h3 style="font-size:30px;font-weight:600;color:#14213D">Label flip</h3>
+<p style="font-size:26px;line-height:1.45">Ainda sem sinal confiável: recall 0,33 e nenhuma métrica de efeito.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#F7F5F0;border-radius:12px;padding:32px">
+<h3 style="font-size:30px;font-weight:600;color:#14213D">Sem atacante adaptativo</h3>
+<p style="font-size:26px;line-height:1.45">Nenhum ataque conhece o detector. Os sinais de conluio seriam os primeiros a cair.</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">07 · Evidência de viabilidade, não validação</p>
+<aside>Esta é a lista que um revisor faria. O item em destaque, o LP incompleto, é o que mais pesa para a direção que vou propor: hoje detectamos a versão fácil do ataque. A versão do artigo calibra λ e se aproxima da média dos benignos, e é contra ela que a defesa precisa ser medida.</aside>
+</section>

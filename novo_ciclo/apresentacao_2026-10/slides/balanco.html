@@ -1,0 +1,27 @@
+<section id="balanco" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#2B5C9E;font-weight:600">Balanço de 12–14/10</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">Seis coisas não funcionaram; cinco se sustentam</h2>
+</div>
+<div style="display:flex;gap:56px;align-items:start">
+<div style="flex:1.15;display:flex;flex-direction:column;gap:18px">
+<h3 style="font-size:30px;font-weight:600;color:#A9481A">Não funcionou</h3>
+<p style="font-size:24px;line-height:1.4;border-left:6px solid #E07A45;padding:2px 0 2px 20px"><b>H1 com α = 0,1:</b> AUC da concentração cai para 0,40 (critério: 0,80).</p>
+<p style="font-size:24px;line-height:1.4;border-left:6px solid #E07A45;padding:2px 0 2px 20px"><b>H2:</b> remover as PCs de heterogeneidade apaga também os atacantes em conluio.</p>
+<p style="font-size:24px;line-height:1.4;border-left:6px solid #E07A45;padding:2px 0 2px 20px"><b>H3:</b> 64 manchas sorteadas dão AUC 0,44 no LP completo (critério: 0,70).</p>
+<p style="font-size:24px;line-height:1.4;border-left:6px solid #E07A45;padding:2px 0 2px 20px"><b>Limiar z &gt; 3:</b> mesmo com AUC 0,94, pega só 20–53% dos atacantes.</p>
+<p style="font-size:24px;line-height:1.4;border-left:6px solid #E07A45;padding:2px 0 2px 20px"><b>Reprodução:</b> o FLAME barra o LP em 4 de 5 execuções; a Tab. 2 do artigo não se repete.</p>
+<p style="font-size:24px;line-height:1.4;border-left:6px solid #E07A45;padding:2px 0 2px 20px"><b>Travamento:</b> a execução 1 parou no round 55; causa desconhecida, não se repetiu.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:18px">
+<h3 style="font-size:30px;font-weight:600;color:#2B5C9E">Funcionou</h3>
+<p style="font-size:24px;line-height:1.4;border-left:6px solid #2B5C9E;padding:2px 0 2px 20px"><b>LP completo</b> no laboratório, fiel ao código dos autores.</p>
+<p style="font-size:24px;line-height:1.4;border-left:6px solid #2B5C9E;padding:2px 0 2px 20px"><b>Linha de base medida:</b> Multi-Krum e FLAME amplificam o LP (89% e 93% com α = 0,1).</p>
+<p style="font-size:24px;line-height:1.4;border-left:6px solid #2B5C9E;padding:2px 0 2px 20px"><b>H1 com α = 0,5:</b> concentração 0,94, onde a distância global dá 0,19.</p>
+<p style="font-size:24px;line-height:1.4;border-left:6px solid #2B5C9E;padding:2px 0 2px 20px"><b>O sinal existe:</b> com o gatilho real, um round basta (AUC 0,83 e 0,94).</p>
+<p style="font-size:24px;line-height:1.4;border-left:6px solid #2B5C9E;padding:2px 0 2px 20px"><b>Controles fechados:</b> ASR de base 4,3% (α = 0,1); Multi-Krum sem ataque 67,2%.</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">25 · Critérios fixados antes de cada teste. Detalhes em fl-robustness-lab/results/layer_profile/ANALISE.md</p>
+<aside>Este é o resumo honesto dos três dias. Das quatro hipóteses, só a H1 se sustenta, e só com não-IID moderado; a H2 e a sonda com manchas sorteadas foram refutadas pelos critérios fixados antes. O limiar fixo também não serve: a separação é boa, mas o z maior que 3 deixa passar a maioria dos atacantes. A reprodução no código dos autores agora tem cinco execuções, três com semente: em quatro o FLAME barra o LP, então não podemos usar a Tabela 2 como premissa sem ressalva. Do outro lado, ficaram de pé o LP completo no laboratório, a amplificação do LP pelo Multi-Krum e pelo FLAME no laboratório (slide 26), a concentração com α = 0,5 e a prova de que o backdoor aparece numa atualização de um round quando se conhece o gatilho. Isso direciona o próximo passo: buscar o gatilho por otimização.</aside>
+</section>

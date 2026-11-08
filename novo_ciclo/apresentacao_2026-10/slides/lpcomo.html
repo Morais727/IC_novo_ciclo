@@ -1,0 +1,37 @@
+<section id="lpcomo" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A9481A;font-weight:600">O alvo · ataque LP (Zhuang et al., ICLR 2024)</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">O LP envenena só as camadas que carregam o backdoor</h2>
+</div>
+<div style="display:flex;gap:20px;align-items:center">
+<div style="flex:1;align-self:stretch;display:flex;flex-direction:column;gap:12px;background:#FFFDF9;border:1px solid #E2DDD2;border-radius:12px;padding:28px">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:44px;font-weight:600;color:#E07A45">1</p>
+<h3 style="font-size:28px;font-weight:600;color:#14213D">Dois modelos locais</h3>
+<p style="font-size:24px;line-height:1.45">Treina um modelo limpo e um com o gatilho.</p>
+</div>
+<x-shape kind="arrow-right" style="background:#B8B2A6;width:44px;height:24px"></x-shape>
+<div style="flex:1;align-self:stretch;display:flex;flex-direction:column;gap:12px;background:#FFFDF9;border:1px solid #E2DDD2;border-radius:12px;padding:28px">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:44px;font-weight:600;color:#E07A45">2</p>
+<h3 style="font-size:28px;font-weight:600;color:#14213D">Substituição de camadas</h3>
+<p style="font-size:24px;line-height:1.45">Troca camadas entre os dois e mede o sucesso do backdoor. Acha o conjunto L* de camadas críticas.</p>
+</div>
+<x-shape kind="arrow-right" style="background:#B8B2A6;width:44px;height:24px"></x-shape>
+<div style="flex:1;align-self:stretch;display:flex;flex-direction:column;gap:12px;background:#FFFDF9;border:1px solid #E2DDD2;border-radius:12px;padding:28px">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:44px;font-weight:600;color:#E07A45">3</p>
+<h3 style="font-size:28px;font-weight:600;color:#14213D">Atualização híbrida</h3>
+<p style="font-size:24px;line-height:1.45">Camadas de L* envenenadas; o resto vem da média dos modelos benignos. λ regula a furtividade.</p>
+</div>
+<x-shape kind="arrow-right" style="background:#B8B2A6;width:44px;height:24px"></x-shape>
+<div style="flex:1;align-self:stretch;display:flex;flex-direction:column;gap:12px;background:#FFFDF9;border:1px solid #E2DDD2;border-radius:12px;padding:28px">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:44px;font-weight:600;color:#E07A45">4</p>
+<h3 style="font-size:28px;font-weight:600;color:#14213D">Controle adaptativo</h3>
+<p style="font-size:24px;line-height:1.45">Simula a defesa do servidor. Se for rejeitado, tira camadas de L* e tenta de novo.</p>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#14213D;border-radius:12px;padding:32px 40px">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:34px;color:#F7F5F0">w̃ = λ·v∘u_mal + ReLU(1 − λ)·v∘u_méd + (1 − v)∘u_méd</p>
+<p style="font-size:24px;line-height:1.4;color:#C9D2E3">v marca as camadas de L*; u_mal é o modelo envenenado; u_méd é a média dos benignos locais. Variante LF: inverte o sinal das camadas de L* para enganar defesas por sinal (RLR).</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">08 · Zhuang et al., “Backdoor Federated Learning by Poisoning Backdoor-Critical Layers”, ICLR 2024, Eq. 4</p>
+<aside>A ideia central do artigo: o backdoor está concentrado num pequeno subconjunto de camadas, as BC layers. Na nossa CNN, quase sempre fc1 e a última convolução; em ResNet18 e VGG19, as camadas lineares e convoluções profundas. Envenenando só essas camadas, a distância para os benignos fica pequena nas demais e as defesas que olham o modelo inteiro não veem o ataque.</aside>
+</section>

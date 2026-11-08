@@ -1,0 +1,242 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage[margin=0.6in]{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{booktabs}
+\usepackage{colortbl}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\usepackage{caption}
+
+% Cores do Relatório Corporativo (Paleta v2)
+\definecolor{primary}{HTML}{0F2A4A}   % Deep Navy
+\definecolor{secondary}{HTML}{008080} % Teal
+\definecolor{accent}{HTML}{C0392B}    % Crimson accent
+\definecolor{lightbg}{HTML}{F4F6F7}   % Off-white light background
+\definecolor{bordergray}{HTML}{BDC3C7}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=primary,
+    filecolor=secondary,      
+    urlcolor=secondary,
+    citecolor=primary,
+}
+
+% Configuração de Cabeçalho e Rodapé
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\fontsize{9}{11}\selectfont\color{primary}\textbf{REVISÃO CIENTÍFICA: ATAQUES E DEFESAS EM FL}}
+\fancyhead[R]{\fontsize{9}{11}\selectfont\color{primary}\textbf{SISTEMAS SEGUROS E CONFIÁVEIS}}
+\fancyfoot[C]{\fontsize{9}{11}\selectfont\color{gray}\thepage}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{secondary}\leaders\hrule height 0.6pt\hfill}}
+\renewcommand{\footrulewidth}{0pt}
+
+% Estilo de seção customizado
+\usepackage{titlesec}
+\titleformat{\section}
+  {\color{primary}\normalfont\large\bfseries}
+  {\thesection}{1em}{}[{\color{secondary}\titlerule[1pt]}]
+\titleformat{\subsection}
+  {\color{secondary}\normalfont\normalsize\bfseries}
+  {\thesubsection}{1em}{}
+
+% Definição de caixas de destaque
+\newtcolorbox{calloutbox}[1]{
+  colback=lightbg,
+  colframe=secondary,
+  fonttitle=\bfseries\color{white},
+  coltitle=white,
+  title=#1,
+  boxrule=0.8pt,
+  left=8pt, right=8pt, top=8pt, bottom=8pt,
+  sharp corners
+}
+
+\newtcolorbox{alertbox}[1]{
+  colback=lightbg,
+  colframe=accent,
+  fonttitle=\bfseries\color{white},
+  coltitle=white,
+  title=#1,
+  boxrule=0.8pt,
+  left=8pt, right=8pt, top=8pt, bottom=8pt,
+  sharp corners
+}
+
+\begin{document}
+
+% Cabeçalho do Título (Estilo v2 compact)
+\begin{center}
+    \colorbox{primary}{
+        \begin{minipage}{\dimexpr\textwidth-2\fboxsep\relax}
+            \centering
+            \vspace{10pt}
+            {\color{white}\fontsize{18}{22}\selectfont\textbf{REVISÃO CIENTÍFICA, TAXONOMIA E ANÁLISE DE ROBUSTEZ}} \\
+            \vspace{5pt}
+            {\color{white}\fontsize{14}{18}\selectfont\textbf{ATAQUES E DEFESAS EM APRENDIZADO FEDERADO}} \\
+            \vspace{5pt}
+            {\color{secondary!30}\fontsize{10}{12}\selectfont\textbf{Taxonomia de Ameaças, Robustez sob Label Skewness, Explicabilidade e Benchmarks Empíricos}} \\
+            \vspace{10pt}
+        \end{minipage}
+    }
+\end{center}
+
+\vspace{10pt}
+
+\section*{Introdução e Escopo}
+O Aprendizado Federado (FL) emergiu como um paradigma proeminente para treinar modelos de machine learning de forma colaborativa e descentralizada, preservando a privacidade dos dados locais dos clientes [3, 22]. Contudo, a ausência de controle físico direto sobre os nós participantes abre espaço para vulnerabilidades severas, com destaque para os Ataques Bizantinos e os Ataques de Envenenamento de Modelo e Dados (Backdoors). Esta revisão sistemática consolida as contribuições de 16 artigos científicos fundamentais da literatura, propondo uma taxonomia unificada de ataques e defesas, suportada por benchmarks empíricos e análises matemáticas de robustez.
+
+\begin{calloutbox}{Pilar de Confiabilidade (Trustworthy FL)}
+A robustez de um sistema de FL não depende apenas da tolerância a falhas ou da acurácia média do modelo, mas sim de um ecossistema integrado que garanta robustez adversária, privacidade diferencial, explicabilidade algorítmica, imparcialidade e auditabilidade ponta a ponta [13, 22].
+\end{calloutbox}
+
+\section{Revisão Sistemática dos Trabalhos Literários}
+
+Abaixo são detalhadas as contribuições centrais de cada um dos trabalhos científicos mapeados nas fontes primárias:
+
+\subsection{BOBA: Byzantine-Robust Federated Learning with Label Skewness (Bao et al., 2024)}
+Este trabalho investiga a vulnerabilidade de Regras de Agregação Robusta (AGRs) tradicionais em cenários reais de dados não-IID com distorção severa de classes (\textit{label skewness}) [3]. Os autores provam que, sob \textit{label skewness}, os gradientes benignos sofrem flutuações extremas na magnitude e direção (alta variância externa), confundindo as defesas baseadas em proximidade geométrica. O BOBA resolve este problema em duas etapas: no Estágio 1, extrai um subespaço honesto de dimensão $c-1$ (onde $c$ é o número de classes) através de uma Decomposição em Valores Singulares (SVD) truncada robusta e podada (\textit{trimmed SVD}), projetando todos os gradientes neste subespaço. No Estágio 2, estima os vértices de um simplex honesto usando uma quantidade mínima de dados limpos do servidor para calcular a distribuição de rótulos de cada cliente, descartando de forma imparcial clientes com distribuições de probabilidade anomalamente negativas (Byzantinos) [3].
+
+\subsection{Blades: A Unified Benchmark Suite for Byzantine Attacks and Defenses (2024)}
+\textit{Blades} é introduzido como um framework distribuído de código aberto, construído sobre a biblioteca Ray, que padroniza os testes de robustez adversária sob condições homogêneas e heterogêneas de dados [14]. O benchmark expõe que a robustez de AGRs clássicas (como Krum e Trimmed Mean) é frequentemente superestimada na literatura científica devido à ausência de ataques adaptativos rigorosos e de uma modelagem consistente de dados não-IID nas avaliações anteriores [14].
+
+\subsection{FedSecurity / FedMLSecurity Benchmark Suite (2023)}
+Desenvolvido como uma extensão da renomada biblioteca FedML, este trabalho propõe um benchmark de ponta a ponta para a simulação de envenenamento e defesas [15]. Sua maior inovação é a extensão das simulações bizantinas clássicas para Modelos de Linguagem de Grande Porte (LLMs) federados, mostrando que técnicas comuns de envenenamento e backdoor representam riscos severos à integridade dos pesos durante o processo de ajuste fino de instruções distribuído (\textit{Instruction Tuning}) [15].
+
+\subsection{A Survey on Securing Federated Learning: Analysis of Applications, Attacks, Challenges, and Trends (Cunha Neto et al., 2023)}
+Este survey detalhado aplica a metodologia PRISMA para conduzir uma análise sistemática e taxonômica de vulnerabilidades no FL [6]. O artigo decompõe as ameaças em ataques contra a privacidade dos dados (inversão de modelos, vazamento de gradiente, GANs) e ataques contra o desempenho do modelo (envenenamento de modelo/dados, free-riding), mapeando de forma rigorosa as defesas baseadas em criptografia homomórfica, computação multipartidária segura (SMC) e privacidade diferencial (DP) [6].
+
+\subsection{State-of-the-Art Defense Schemes against Byzantine Attack in Federated Learning (2025)}
+O trabalho sistematiza as defesas contra ataques bizantinos em quatro grupos metodológicos: Baseadas em Privacidade Diferencial, Baseadas em Otimização (ex: Shapley Values), Baseadas em Geometria de Distância (ex: BOBA) e Baseadas em Estatísticas de Gradiente (ex: FLARM), avaliando criticamente seus custos computacionais e escalabilidade para dados heterogêneos [12].
+
+\subsection{Byzantine-Robust Federated Learning Using Generative Adversarial Networks (2024)}
+Propõe uma abordagem disruptiva sem dados de validação externos: o servidor treina uma Rede Adversária Generativa Condicional (cGAN) de forma livre de dados de entrada reais, utilizando o próprio modelo global consolidado como discriminador [15]. O gerador da cGAN sintetiza dados representativos das fronteiras de decisão (\textit{boundary-aligned synthetic data}), que são então usados pelo servidor como um conjunto de validação autônomo para testar a perda e a acurácia de cada cliente, provendo filtros baseados em limiares dinâmicos adaptativos ou agrupamentos por K-means [15].
+
+\subsection{FLGuard: Robust Federated Learning Using Dual Attention and Gradient Reconstruction (2024)}
+O FLGuard integra a similaridade de cosseno com os erros de reconstrução de parâmetros obtidos por meio de um Autoencoder Variacional (VAE) treinado com gradientes honestos [8]. Um mecanismo de dupla atenção (auto-atenção e atenção cruzada) processa essas métricas para gerar um escore de confiança contínuo e adaptativo para cada cliente, mitigando ataques adaptativos sem a rigidez de descartes binários [8].
+
+\subsection{Dual Filtering Based Decentralized Learning Against Byzantine Attack (DF-PAR, 2024)}
+Este trabalho foca em redes descentralizadas de P2P (Peer-to-Peer) sem servidor central, com aplicação em grades de energia inteligentes (\textit{smart grids}) [2]. Cada nó vizinho aplica o algoritmo DF-PAR para filtrar atualizações maliciosas de seus vizinhos diretos, avaliando em tempo real a similaridade de cosseno e uma recompensa instantânea baseada em distância Euclidiana. O peso de agregação é ajustado dinamicamente baseando-se na credibilidade histórica acumulada de cada nó [2].
+
+\subsection{XI-DDaBA: developments towards explainability (Rodríguez-Barroso et al., 2024)}
+Este projeto inovador foca na explicabilidade e imparcialidade em defesas robustas [9]. Ele estende o algoritmo DDaBA (que filtrava clientes baseado em seu desempenho bruto sobre dados do servidor, penalizando nós honestos heterogêneos). O XI-DDaBA substitui a classificação de desempenho por Explicações Lineares Locais (LLEs), medindo a similaridade de cosseno entre as matrizes de importância de atributos das previsões locais dos clientes. Isso permite diferenciar de forma explicável atacantes reais de nós benignos de 'baixa qualidade' de dados, eliminando rodadas de aquecimento [9].
+
+\subsection{Multi-metrics adaptively identifies backdoors in Federated learning (2023)}
+Os autores desvelam duas fraquezas de defesas geométricas unidimensionais: a maldição da dimensionalidade (a distância Euclidiana se dispersa em alta dimensão) e a incapacidade de métricas isoladas contra ataques furtivos (como o Edge-case PGD) [11]. O trabalho propõe um indicador multi-métrica composto que combina distância de Manhattan (L1), distância Euclidiana (L2) e similaridade de Cosseno, projetando-as através de um processo de \textbf{branqueamento (whitening)} baseado na matriz de covariância para gerar escores adaptativos de divergência [11].
+
+\subsection{Defesas em Sensoriamento de Espectro Cooperativo (CSS) contra Byzantine SSDF Attacks}
+Dois trabalhos aplicam inteligência estatística no servidor para defender redes de rádio cognitivo contra ataques de falsificação de dados de sensoriamento (SSDF):
+\begin{enumerate}
+\item \textbf{Defense Using Isolation Forest (2022) [16]:} Demonstra que, devido às perturbações introduzidas por atacantes probabilísticos (CIPS), a contagem de anomalias detectadas via Floresta de Isolamento é significativamente menor nos nós maliciosos do que nos nós honestos (cuja variância natural é mantida).
+\item \textbf{Gaussian Mixture Model-Based Anomaly Detection (2023) [9]:} Modela matematicamente a distribuição de energia reportada sob ataques probabilísticos suaves através de uma PDF Gaussiana Truncada. Um algoritmo de GMM com duas classes é ajustado via Maximização de Expectativa (EM) no servidor para determinar escores de confiança que funcionam como pesos na agregação de soma ponderada das energias.
+\end{enumerate}
+
+\subsection{RAGNAR: Lightweight Defense against Poisoning Attacks in Federated LLMs and IoT (Morais et al., 2024)}
+RAGNAR propõe um mecanismo de filtragem pré-agregação super-leve [10]. O servidor extrai um vetor geométrico composto (L1, L2, L3 norms e similaridade de cosseno com o modelo global) de cada cliente e alimenta um modelo supervisionado XGBoost treinado com histórico de simulação. Modelos previstos como maliciosos são imediatamente excluídos da agregação [10].
+
+\section{Taxonomia Consolidada de Ataques}
+
+A taxonomia de ameaças em Aprendizado Federado pode ser estruturada formalmente de acordo com o objetivo do adversário, o canal de injeção e o nível de furtividade da perturbação.
+
+\subsection{Classificação por Objetivo do Adversário}
+\begin{itemize}
+\item \textbf{Ataques ao Desempenho do Modelo (Model Performance Attacks):}
+    \begin{itemize}
+    \item \textit{Ataques Bizantinos (Não-Direcionados):} O adversário visa degradar a acurácia global do modelo, induzir divergência ou estagnar o aprendizado. Exemplos comuns incluem o envio de ruído Gaussiano puro (Gaussian Noise) ou inversão pura de parâmetros (Sign Flipping).
+    \item \textit{Ataques de Backdoor (Direcionados):} O adversário busca injetar um comportamento malicioso oculto. O modelo continua com acurácia excelente na tarefa principal para dados limpos, mas responde a um gatilho de backdoor específico (\textit{trigger}, como uma marca d'água ou patch de pixel) prevendo uma classe alvo incorreta pré-definida.
+    \item \textit{Ataques de Aproveitadores (Free-Riding):} O cliente envia atualizações inúteis (ex: ruído ou gradientes vazios) para colher os benefícios do modelo global final sem gastar recursos computacionais locais ou expor dados.
+    \end{itemize}
+\item \textbf{Ataques à Privacidade dos Dados (Data Privacy Attacks):}
+    \begin{itemize}
+    \item \textit{Inversão de Modelo e Reconstrução de Gradiente (DLG):} O servidor malicioso ou um observador passivo intercepta os gradientes de um cliente e reconstrói de forma idêntica seus dados de treino através de otimização de gradiente reverso.
+    \item \textit{Ataques baseados em GANs:} Nós maliciosos utilizam o modelo global como discriminador para treinar um gerador de GAN local que sintetiza com alta fidelidade a distribuição de dados privados de outros nós.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Classificação pelo Canal de Injeção}
+\begin{itemize}
+\item \textbf{Envenenamento de Dados (Data Poisoning):} A perturbação ocorre na fonte de dados do cliente antes do treinamento. Exemplo: Label Flipping (inverter o rótulo de gato para cachorro) ou inserção física do trigger.
+\item \textbf{Envenenamento de Modelo (Model Poisoning):} O atacante manipula os gradientes calculados diretamente. É significativamente mais destrutivo, pois não está fisicamente limitado por dados reais. O atacante pode escalar artificialmente a magnitude (\textit{Constrain-and-Scale / Model Replacement}) ou alterar direções geométricas de forma ótima frente às defesas (IPM, LIE, MinMax).
+\end{itemize}
+
+\subsection{Ataques Furtivos em Camadas Críticas (Backdoor-Critical Layers - BC)}
+Uma descoberta recente crucial [1] demonstra que a eficácia de ataques de backdoor está concentrada em um pequeno subconjunto de camadas do modelo profundo, denominadas \textbf{Camadas Críticas de Backdoor (BC layers)}. Em arquiteturas CNN, isso geralmente corresponde à primeira camada totalmente conectada (\textit{fc1.weight}), e em modelos grandes como ResNet18 e VGG19, está localizado nas camadas de pesos mais profundas (como a última camada \textit{linear.weight}) e em alguns blocos convolucionais profundos, enquanto as camadas de viés (\textit{bias}) e as rasas não possuem influência relevante no backdoor [1].
+
+Atacantes sofisticados exploram isso através da \textbf{Análise de Substituição de Camadas (Layer Substitution Analysis - LSA)}, identificando localmente as BC layers ao substituir individualmente as camadas do modelo malicioso treinado pelas camadas do modelo benigno convergido (substituição direta - $b2m$) e avaliando a queda na taxa de sucesso do backdoor (BSR). Ao executar a substituição reversa ($m2b$), copiando incrementalmente as camadas maliciosas para o modelo benigno até que o BSR atinja um limiar $\tau$, o atacante mapeia as camadas críticas [1].
+
+A partir desse mapa, o atacante executa o \textbf{Layer-wise Poisoning (LP) Attack}, modificando apenas as camadas contidas no conjunto de BC layers $L^*$. Isso garante que a distância geométrica (\textit{Krum distance}) em relação aos clientes benignos permaneça mínima nas outras 50+ camadas do modelo, tornando o ataque completamente invisível a defesas tradicionais baseadas em agrupamento e similaridade (MultiKrum, FLAME, FLARE) [1]. Adicionalmente, contra defesas \textit{sign-based} (como Robust Learning Rate - RLR) que invertem as taxas de aprendizado em dimensões que apresentam sinais conflitantes, o adversário executa o \textbf{Layer-wise Flipping (LF) Attack}, invertendo proativamente os sinais dos parâmetros em $L^*$ para desarmar a mitigação no servidor [1].
+
+\section{Taxonomia de Defesas e Regras de Agregação Robusta}
+As defesas em Aprendizado Federado visam garantir o alinhamento do gradiente global consolidado com a direção real dos dados de treinamento honestos.
+
+\subsection{Regras de Agregação Robusta Tradicionais (Geométricas e Estatísticas)}
+\begin{itemize}
+\item \textbf{Mediana e Média Podada (Median / Trimmed Mean):} Operam em nível de coordenadas individuais (unidimensionais), calculando estatísticas robustas independentes para neutralizar outliers de grande magnitude. No entanto, falham em capturar similaridades angulares e deterioram o desempenho global em dados não-IID [14, 15].
+\item \textbf{Krum e m-Krum (Blanchard et al., 2017):} Baseiam-se na distância Euclidiana acumulada entre atualizações locais. Selecionam o cliente (ou m clientes) mais próximo da vizinhança honesta como o gradiente global consolidado. Falham sob ataques furtivos (como o LP attack) e são altamente tendenciosas em ambientes de label skewness, onde gradientes benignos e heterogêneos são erroneamente descartados como anomalias [3, 16].
+\end{itemize}
+
+\subsection{Defesas de Última Geração (Híbridas e Adaptativas)}
+\begin{itemize}
+\item \textbf{Sistemas Baseados em Raiz de Confiança (FLTrust / BOBA):} Empregam conjuntos mínimos de dados no servidor (30-100 amostras) para estabelecer um gradiente de referência limpo. O \textbf{BOBA} (Bao et al., 2024) destaca-se ao usar SVD truncado robusto para fitar um subespaço honesto e mapear gradientes em um simplex de distribuição de rótulos do servidor, garantindo imparcialidade em ambientes altamente não-IID [3].
+\item \textbf{Filtros de Similaridade Adaptativos (FoolsGold / FLGuard):} Monitoram de forma contínua o comportamento dos clientes. O FoolsGold penaliza nós que enviam updates altamente correlacionados sistematicamente (identificando coligações de envenenadores de backdoor). O \textbf{FLGuard} avança ao utilizar erros de reconstrução de gradiente baseados em VAE juntamente com atenção cruzada para atribuir ponderações de confiança dinâmicas em vez de decisões rígidas binárias [8].
+\item \textbf{Sistemas Multi-Métricas e de Branqueamento (Whitening):} Combinam métricas complementares (Manhattan L1 para perturbações amplas, Euclidiana L2 para magnitudes e Cosseno para direcionalidade) e aplicam normalização estatística pela inversa da matriz de covariância (processo de branqueamento) para neutralizar de forma robusta backdoors ultra-furtivos (Edge-case PGD) [11].
+\end{itemize}
+
+\begin{alertbox}{A Falha Fatal da Distância Euclidiana Isolada}
+Em modelos de alta dimensão (ResNet18, VGG19), a distância Euclidiana perde sua capacidade discriminativa devido à maldição da dimensionalidade. Além disso, no cenário de dados não-IID, o ruído legítimo do desbalanceamento de classes em nós honestos frequentemente excede o desvio introduzido por adversários furtivos nas camadas críticas, resultando no descarte de clientes benignos valiosos pelas defesas estatísticas clássicas [3, 11].
+\end{alertbox}
+
+\section{Análise Empírica e Gráficos Comparativos (CIFAR-10)}
+
+Abaixo apresentamos as análises visuais do comportamento dos algoritmos sob ataque:
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.75\textwidth]{cifar10-backdoor-comparison.png}
+\caption{\textbf{Resiliência contra Backdoors Furtivos (Edge-case PGD) no CIFAR-10.} O indicador Multi-métrica com branqueamento (Ours) neutraliza a taxa de sucesso do backdoor (BA \%) para 3,06\% sem comprometer a acurácia do modelo principal (MA \%), superando de forma consistente defesas como FLAME e FoolsGold.}
+\label{fig:backdoor}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.75\textwidth]{cifar10-boba-byzantine-comparison.png}
+\caption{\textbf{Desempenho sob Ataques Bizantinos e Label Skewness (Dirichlet 2-classes).} O BOBA alcança 69,2\% de acurácia no pior cenário de ataque bizantino no CIFAR-10, mantendo a estabilidade e imparcialidade frente ao colapso de baselines como Krum (31,8\%) e Trimmed Mean (14,1\%) sob severo não-IID.}
+\label{fig:byzantine}
+\end{figure}
+
+\clearpage
+
+\section{Quadro Geral dos Artigos e Eventos Científicos}
+
+\begin{table}[htbp]
+\centering
+\caption{Quadro comparativo dos principais trabalhos da literatura, indicando o ano, evento de publicação, escopo de ameaças e o mecanismo de defesa estudado.}
+\label{tab:artigos}
+\fontsize{7.5}{10}\selectfont
+\begin{tabular}{p{3.8cm}p{1.2cm}p{5.5cm}p{2.8cm}p{3.2cm}}
+\toprule
+\textbf{Artigo Científico} & \textbf{Ano/Evento} & \textbf{Objetivo Principal} & \textbf{Ataques} & \textbf{Defesa Analisada} \\
+\midrule
+\rowcolor{lightbg} \textbf{BOBA: Byzantine-Robust FL with Label Skewness} & 2024 / AISTATS & Evitar o viés de seleção e a instabilidade geométrica sob heterogeneidade de classes. & Gauss, IPM, LIE, Mimic, MinMax, MinSum. & BOBA: SVD truncado robusto e simplex de rótulos. \\
+\textbf{Blades: Unified Benchmark Suite} & 2024 / IoTDI & Framework escalável no Ray para simulação unificada de ataques bizantinos e reavavação de AGRs. & ALIE, IPM, MinMax, Sign/LabelFlipping, Ruído. & Avaliação de AGRs clássicas e híbridas (DnC, SignGuard, ClippedClustering). \\
+\rowcolor{lightbg} \textbf{FedSecurity Benchmark Suite} & 2023 / arXiv & Benchmark de segurança de ponta a ponta expandido para LLMs federados. & Envenenamento, free-riding, backdoors, vazamento. & Injeções de defesas em 3 estágios (m-Krum, FoolsGold, RFA, SLSGD, CRFL). \\
+\textbf{A Survey on Securing FL (Cunha Neto et al.)} & 2023 / IEEE Access & Revisão PRISMA estruturando a taxonomia de privacidade e desempenho do modelo. & Poisoning, Free-riding, Model Inversion, Gradient. & FoolsGold, RFA, detecção por PCA, privacidade diferencial (LDP, SMC). \\
+\rowcolor{lightbg} \textbf{State-of-the-Art Defense Schemes} & 2025 / ICCEA & Sistematização de esquemas de mitigação sob dados heterogêneos não-IID em 4 metodologias. & Ataques bizantinos, Sign-Flipping, LIE, MinMax. & FLEST, BOBA, FedSV, FLARM, FLGuard, FPD, DDaBA, FedMP. \\
+\textbf{Byzantine-Robust FL Using GANs} & 2024 / Uppsala & Validar pesos usando cGAN geradora livre de dados reais para sondar fronteiras de decisão. & Sign/LabelFlipping, Random Noise, IPM. & Filtros baseados em cGAN sintética (Adaptive: Mean, Clustered, Fixed). \\
+\rowcolor{lightbg} \textbf{FLGuard: Robust FL Using Dual Attention} & 2024 / Univ. Tehran & Mitigar anomalias em gradientes usando erros de reconstrução baseados em VAE e atenção. & Scaling, adaptive, label flipping, backdoor. & FLGuard: VAE + Cosseno via dupla atenção com pesos de confiança. \\
+\textbf{Dual Filtering Decentralized Learning} & 2024 / Shenzhen & Prover segurança bizantina em redes descentralizadas P2P para smart grids. & Little, Gaussian, Random, Converse. & DF-PAR: Filtragem dupla baseada em cosseno e distância. \\
+\rowcolor{lightbg} \textbf{Defense Strategy: Towards Explainability} & 2024 / Univ. Granada & Garantir explicabilidade (LLEs) e imparcialidade ao evitar o descarte de nós benignos. & Label-flipping, weights aleatórios. & XI-DDaBA: Substituição de acurácia por similaridade de explicações locais. \\
+\textbf{Multi-metrics adaptively identifies backdoors} & 2023 / SCUT & Combinar métricas complementares projetadas via branqueamento para barrar backdoors. & Model replacement, DBA, PGD, Edge-case PGD. & Multi-Metrics: Branqueamento adaptativo de L1, L2 e Cosseno. \\
+\rowcolor{lightbg} \textbf{Defense in Cognitive Radio (Isolation Forest)} & 2022 / arXiv & Identificar nós maliciosos probabilísticos (CIPS) através de Isolation Forest. & CIPS SSDF. & Contagem de anomalias por CSU frente a um limiar estatístico. \\
+\textbf{GMM-Based Anomaly Detection} & 2023 / IEEE TCCN & Análise teórica da PDF sob ataque probabilístico suave para ponderação de CSUs via GMM. & CIPS suave e rígido (ataques SSDF). & GMM + EM: Soma ponderada robusta baseada em GMM. \\
+\rowcolor{lightbg} \textbf{RAGNAR: Lightweight Defense} & 2024 / COURB & Classificar e filtrar atualizações de forma ultra-leve usando aprendizado supervisionado. & Label-flipping, backdoor, manipulação. & RAGNAR: XGBoost sobre características geométricas composto (L1, L2, L3, Cosseno). \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\end{document}

@@ -1,0 +1,95 @@
+{
+  "v": 4,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-10-11T15:00:00Z"
+  },
+  "lists": "css",
+  "title": "Barrando backdoors em camadas críticas",
+  "order": [
+    "cover",
+    "linha",
+    "lab",
+    "ragnar",
+    "sinais",
+    "regra",
+    "limites",
+    "lpcomo",
+    "lpfura",
+    "lplab",
+    "problemas",
+    "tese",
+    "arquitetura",
+    "mapa",
+    "hipoteses",
+    "tradeoff",
+    "protocolo",
+    "cronograma",
+    "passos",
+    "res1",
+    "res2",
+    "res3",
+    "res5",
+    "res4",
+    "balanco",
+    "res6",
+    "res7",
+    "res8",
+    "res9",
+    "res10",
+    "res11",
+    "f2lit",
+    "f2diag",
+    "f2nc",
+    "f2final",
+    "f2extra",
+    "f2next",
+    "riscos",
+    "fecho"
+  ],
+  "sections": {
+    "s1": {
+      "description": "O que já temos pronto e o que aprendemos com os três primeiros entregáveis",
+      "start": "cover"
+    },
+    "s2": {
+      "description": "O alvo: como o ataque LP envenena só as camadas críticas e por que fura as defesas",
+      "start": "lpcomo"
+    },
+    "s3": {
+      "description": "Os problemas que a literatura revisada deixa em aberto",
+      "start": "problemas"
+    },
+    "s4": {
+      "description": "A proposta: uma defesa por perfil de camadas, sem treino em ataques",
+      "start": "tese"
+    },
+    "s5": {
+      "description": "Como transformar a proposta num trabalho publicável até junho de 2027",
+      "start": "protocolo"
+    },
+    "s6": {
+      "description": "Resultados de 12–16/10: LP completo, H1–H4, reprodução, FLAME, similaridade e defesa por tensor, avaliação final",
+      "start": "res1"
+    },
+    "s7": {
+      "description": "Fase 2 (16/10): FedSurrogate, diagnóstico das réplicas, inversão de gatilho, teste pré-registrado em sementes novas e confirmações",
+      "start": "f2lit"
+    },
+    "s8": {
+      "description": "Próximos passos: as três direções para o artigo",
+      "start": "f2next"
+    }
+  },
+  "faces": {
+    "source-serif-4": {
+      "family": "Source Serif 4",
+      "href": "https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400..700&display=swap"
+    },
+    "ibm-plex-sans": {
+      "family": "IBM Plex Sans",
+      "href": "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
+    }
+  },
+  "designSystems": []
+}

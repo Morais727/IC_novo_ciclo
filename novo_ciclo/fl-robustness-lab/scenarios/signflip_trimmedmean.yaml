@@ -1,0 +1,15 @@
+name: signflip_trimmedmean
+num_clients: 20
+dirichlet_alpha: 0.5
+num_malicious: 4
+attack: sign_flip
+attack_params: {scale: 1.0}
+defense: trimmed_mean
+defense_params: {num_malicious_assumed: 4}
+rounds: 40
+local_epochs: 1
+batch_size: 32
+lr: 0.01
+server_holdout_size: 100
+seed: 42
+eval_every: 5

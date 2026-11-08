@@ -1,0 +1,57 @@
+# .gitignore do repositório IC — versiona SÓ os docs/código.
+# Os arquivos pesados de execução (treinos, checkpoints, datasets) ficam SÓ no dl-16.
+# Alinhado com as exclusões do sincronizar.sh.
+
+# ---- ambientes e binários de máquina ----
+.venv/
+.venv-*/
+venv/
+env/
+wheels/
+__pycache__/
+*.pyc
+*.pyo
+*.so
+*.o
+
+# ---- datasets e caches ----
+data/
+data_cache/
+cifar*/
+**/DADOS_BRUTOS/
+**/MNIST/
+**/FashionMNIST/
+**/cifar-10-batches-py/
+*-ubyte
+*-ubyte.gz
+
+# ---- saídas pesadas de execução (só no dl-16) ----
+results/
+*.log
+*.pt
+*.pth
+*.ckpt
+*.npy
+*.model
+*.mnn
+*lg_shadow*
+.lock
+*.lock
+
+# ---- arquivos grandes / mídia / pacotes ----
+*.whl
+*.mp4
+*.mov
+*.zip
+*.gz
+*.tar
+*.tar.gz
+*.tgz
+
+# ---- temporários ----
+*.diverged*
+*.bak_*
+.DS_Store
+
+# projeto antigo (framework FedML vendorizado) — contém segredos; fica só no dl-16
+CoUrb-2024/

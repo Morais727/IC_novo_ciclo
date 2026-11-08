@@ -1,0 +1,15 @@
+name: gaussian_krum
+num_clients: 20
+dirichlet_alpha: 0.5
+num_malicious: 4
+attack: gaussian_noise
+attack_params: {std: 5.0}
+defense: krum
+defense_params: {num_malicious_assumed: 4}
+rounds: 40
+local_epochs: 1
+batch_size: 32
+lr: 0.01
+server_holdout_size: 100
+seed: 42
+eval_every: 5

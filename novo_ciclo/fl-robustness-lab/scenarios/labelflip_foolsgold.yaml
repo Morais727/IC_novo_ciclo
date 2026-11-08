@@ -1,0 +1,15 @@
+name: labelflip_foolsgold
+num_clients: 20
+dirichlet_alpha: 0.5
+num_malicious: 4
+attack: label_flip
+attack_params: {mode: fixed, source: 0, target: 2}
+defense: foolsgold
+defense_params: {kappa: 1.0}
+rounds: 40
+local_epochs: 1
+batch_size: 32
+lr: 0.01
+server_holdout_size: 100
+seed: 42
+eval_every: 5

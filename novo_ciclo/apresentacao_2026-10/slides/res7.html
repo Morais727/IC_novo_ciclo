@@ -1,0 +1,29 @@
+<section id="res7" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#2B5C9E;font-weight:600">Resultados de 14/10 · item 2</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">Olhar a similaridade tensor por tensor pega o LP com α = 0,1</h2>
+</div>
+<div style="display:flex;gap:48px;align-items:start">
+<table style="width:1100px;font-size:25px;color:#2A3346">
+<tr><th style="width:34%;text-align:left">AUC com α = 0,1</th><th style="width:22%;text-align:right">por tensor (nosso)</th><th style="width:22%;text-align:right">modelo inteiro</th><th style="width:22%;text-align:right">FoolsGold</th></tr>
+<tr style="background:#DCE6F2"><td><b>LP, variante evasiva</b></td><td style="text-align:right;color:#2B5C9E"><b>0,94</b></td><td style="text-align:right">0,41</td><td style="text-align:right">0,72</td></tr>
+<tr><td>LP dos autores (deltas idênticos)</td><td style="text-align:right">1,00</td><td style="text-align:right">1,00</td><td style="text-align:right">1,00</td></tr>
+<tr><td>pixel</td><td style="text-align:right;color:#A9481A">0,48</td><td style="text-align:right">0,48</td><td style="text-align:right">0,47</td></tr>
+<tr><td>DBA</td><td style="text-align:right;color:#A9481A">0,69</td><td style="text-align:right">0,74</td><td style="text-align:right">0,78</td></tr>
+<tr><td>concentração (H1), LP</td><td style="text-align:right">0,40</td><td style="text-align:right">—</td><td style="text-align:right">—</td></tr>
+</table>
+<div style="flex:1;display:flex;flex-direction:column;gap:22px">
+<div style="border-left:6px solid #2B5C9E;padding:4px 0 4px 24px">
+<p style="font-size:24px;line-height:1.45"><b>Critério cumprido:</b> 0,94 ≥ 0,80 e 0,53 acima do modelo inteiro. Primeiro sinal que funciona com α = 0,1.</p>
+</div>
+<div style="border-left:6px solid #2B5C9E;padding:4px 0 4px 24px">
+<p style="font-size:24px;line-height:1.45"><b>Aponta a camada certa:</b> o tensor mais suspeito é o fc1.weight, o L* do ataque.</p>
+</div>
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px">
+<p style="font-size:24px;line-height:1.45"><b>Limite:</b> não pega backdoors treinados separadamente (pixel, DBA). Falta o atacante que soma ruído em L* (H4).</p>
+</div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">27 · experiments/layer_similarity.py, critério fixado antes. Variante evasiva: cada atacante usa o próprio delta limpo fora de L*. 15 rounds, agregação oráculo, semente 42</p>
+<aside>No LP dos autores, todos os atacantes mandam o mesmo delta, então qualquer medida de similaridade os pega; isso não prova nada. Por isso criei uma variante evasiva: cada atacante usa o próprio delta limpo fora das camadas envenenadas, e só elas carregam a parte em comum. Contra essa variante, com não-IID severo, a similaridade no modelo inteiro fica em 0,41, abaixo do acaso, porque a parte envenenada se perde no resto. Olhando tensor por tensor, a AUC sobe para 0,94, e o tensor que mais se destaca é justamente o fc1.weight, que o ataque escolheu. É o primeiro sinal nosso que funciona onde a concentração falhou. O limite é claro: backdoors treinados separadamente, como pixel e DBA, não compartilham uma componente construída e não são pegos. O próximo teste é o atacante que conhece a defesa e soma ruído na camada envenenada, para medir quanto backdoor ele perde para fugir.</aside>
+</section>

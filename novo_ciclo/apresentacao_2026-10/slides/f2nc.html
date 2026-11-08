@@ -1,0 +1,26 @@
+<section id="f2nc" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:112px 128px 150px;display:flex;flex-direction:column;gap:32px">
+<div style="display:flex;flex-direction:column;gap:10px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#2B5C9E;font-weight:600">Fase 2 · reparo do modelo no servidor (100 amostras limpas)</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:54px;font-weight:600;line-height:1.12;color:#14213D">Inverter o gatilho resolve pixel e DBA — mas não enxerga o LP</h2>
+</div>
+<div style="display:flex;gap:40px">
+<div style="flex:1.15;display:flex;flex-direction:column;gap:16px">
+<p style="font-size:25px;line-height:1.45"><b>NC-U:</b> Neural Cleanse enxuto (máscara + padrão por classe; alvo se o índice de anomalia > 2) e desaprendizado com o gatilho invertido e rótulo verdadeiro. Sem saber gatilho nem alvo.</p>
+<table style="width:100%;font-size:23px;color:#2A3346">
+<tr><th style="text-align:left">FedAvg + NC-U, ASR</th><th style="text-align:right">antes</th><th style="text-align:right">depois</th><th style="text-align:right">custo</th></tr>
+<tr style="background:#DCE6F2"><td>pixel, sementes 46/47/48</td><td style="text-align:right">89 / 94 / 93%</td><td style="text-align:right;color:#2B5C9E"><b>1 / 2 / 1%</b></td><td style="text-align:right">1,7–3,3 pp</td></tr>
+<tr style="background:#DCE6F2"><td>DBA, sementes 46/47/48</td><td style="text-align:right">85 / 67 / 94%</td><td style="text-align:right;color:#2B5C9E"><b>2 / 1 / 0%</b></td><td style="text-align:right">0,3–4,7 pp</td></tr>
+<tr><td>PGD, semente 42</td><td style="text-align:right">94%</td><td style="text-align:right;color:#A9481A">71%</td><td style="text-align:right">3,2 pp</td></tr>
+<tr><td>sem ataque, 4 sementes</td><td style="text-align:right">—</td><td style="text-align:right">nunca detectado</td><td style="text-align:right">0 pp</td></tr>
+<tr style="background:#F6E3D7"><td>família LP, 9 modelos</td><td style="text-align:right">55–80%</td><td style="text-align:right;color:#A9481A"><b>detectado em 1</b></td><td style="text-align:right">—</td></tr>
+</table>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:22px">
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px"><p style="font-size:25px;line-height:1.45"><b>Sem gatilho, falha:</b> fine-pruning só derruba o ASR com ~80% de fc1 podado, com acurácia já em ~47%; a poda dentro do treino deixa 70% e 59%.</p></div>
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px"><p style="font-size:25px;line-height:1.45"><b>Por que o LP escapa:</b> índice 0,7–1,7. O modelo com LP não ganha o "atalho" de máscara pequena que o NC procura; no modelo limpo, a classe 0 já é a mais fácil.</p></div>
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px"><p style="font-size:25px;line-height:1.45"><b>Rejeitado:</b> desaprender a classe mais fácil sempre (sem detecção) custa 4,8 pp no modelo limpo e erra o alvo.</p></div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:56px;width:1664px;font-size:22px;color:#6B7385">35 · src/defenses/nc.py, repair.py · results/fase2/nc.md e repair.md · lr 0,001, 10 épocas, metade das amostras com gatilho</p>
+<aside>Como as atualizações não bastam, mudei de fonte de informação: o servidor guarda 100 amostras limpas e examina o modelo final. Primeiro tentei reparos que não precisam achar o gatilho, poda e ajuste fino, e eles falharam. Depois, uma versão enxuta do Neural Cleanse: para cada classe, procuro o menor carimbo que leva tudo para ela; se uma classe é muito mais fácil que as outras, é o alvo, e eu desaprendo esse carimbo. Contra pixel e DBA funciona em todas as sementes de teste, com o ataque caindo para 2% ou menos, e nunca dispara num modelo limpo. Contra o LP não detecta: o modelo envenenado pelo LP não fica com um atalho pequeno que o método encontre.</aside>
+</section>

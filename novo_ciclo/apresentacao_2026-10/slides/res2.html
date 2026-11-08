@@ -1,0 +1,28 @@
+<section id="res2" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:44px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#2B5C9E;font-weight:600">Resultados de 12/10 · passo 1</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">A concentração pega o LP com α = 0,5, mas não com α = 0,1</h2>
+</div>
+<div style="display:flex;gap:56px;align-items:start">
+<table style="width:1040px;font-size:26px;color:#2A3346">
+<tr><th style="width:43%;text-align:left">Escore (AUC)</th><th style="width:19%;text-align:right">LP simpl. α=0,5</th><th style="width:19%;text-align:right">LP compl. α=0,5</th><th style="width:19%;text-align:right">LP compl. α=0,1</th></tr>
+<tr><td>distância global à mediana</td><td style="text-align:right">0,91</td><td style="text-align:right;color:#A9481A"><b>0,19</b></td><td style="text-align:right">0,59</td></tr>
+<tr><td>máximo por camada</td><td style="text-align:right">0,88</td><td style="text-align:right;color:#A9481A"><b>0,25</b></td><td style="text-align:right">0,52</td></tr>
+<tr style="background:#F6DFCF"><td><b>concentração (H1)</b></td><td style="text-align:right"><b>0,95</b></td><td style="text-align:right"><b>0,94</b></td><td style="text-align:right;color:#A9481A"><b>0,40</b></td></tr>
+<tr><td>concentração sem 9 PCs (H2)</td><td style="text-align:right">0,64</td><td style="text-align:right">0,53</td><td style="text-align:right">0,75</td></tr>
+</table>
+<div style="flex:1;display:flex;flex-direction:column;gap:24px">
+<div style="border-left:6px solid #2B5C9E;padding:4px 0 4px 24px">
+<p style="font-size:25px;line-height:1.45"><b>α = 0,5:</b> o LP completo fica “típico demais” e engana as distâncias, mas a concentração o vê.</p>
+</div>
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px">
+<p style="font-size:25px;line-height:1.45"><b>α = 0,1:</b> só a fc1 com λ = 0,5 some na variação honesta, onde o ataque é mais forte.</p>
+</div>
+<div style="border-left:6px solid #E07A45;padding:4px 0 4px 24px">
+<p style="font-size:25px;line-height:1.45"><b>H2 refutada:</b> tirar as PCs apaga os próprios atacantes, que formam um componente.</p>
+</div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">21 · experiments/layer_profile.py, critérios fixados antes da coleta. 15 rounds, agregação oráculo. Em laranja e negrito: falha ou sinal invertido (AUC &lt; 0,5)</p>
+<aside>H1 se sustenta no critério declarado (α = 0,5, AUC ≥ 0,8) para as duas versões do LP. O ponto forte: com α = 0,5 o LP completo engana a distância global (0,19, invertida) e o detector camada a camada (0,25), que é o análogo do Multi-Krum por camada que os autores testaram. A concentração o pega pelo contraste entre a fc1 e as demais camadas. O ponto fraco: com α = 0,1 o escore cai para 0,40. H2 foi refutada na forma testada. Remover as PCs ajuda com α = 0,1 (0,40 para 0,75), mas atrapalha com α = 0,5 e inverte a distância global (0,01). Outro achado: mesmo com AUC 0,94, a decisão por z maior que 3 tem recall entre 0,20 e 0,53, então o limiar precisa ser calibrado.</aside>
+</section>

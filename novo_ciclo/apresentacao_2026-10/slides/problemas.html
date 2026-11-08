@@ -1,0 +1,18 @@
+<section id="problemas" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:44px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A9481A;font-weight:600">Problemas abertos · artigos revisados</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">Sete problemas que a defesa precisa resolver</h2>
+</div>
+<table style="width:1664px;font-size:26px;color:#2A3346">
+<tr><th style="width:42%;text-align:left">Problema</th><th style="width:24%;text-align:left">Onde aparece</th><th style="width:34%;text-align:left">O que exige da defesa</th></tr>
+<tr><td>Heterogeneidade faz honestos parecerem atacantes</td><td>BOBA, Blades</td><td>FP medido sob não-IID severo</td></tr>
+<tr><td>Uma métrica só falha em alta dimensão</td><td>Multi-métricas; nosso M3</td><td>combinar famílias de sinais</td></tr>
+<tr><td>Robustez superestimada sem atacante adaptativo</td><td>Blades; LP, Apêndice 14</td><td>testar contra quem conhece a defesa</td></tr>
+<tr><td>Detector supervisionado não generaliza</td><td>RAGNAR v1: recall 0</td><td>nada de treino com ataques</td></tr>
+<tr><td>Descarte binário pune caro cada falso positivo</td><td>FLGuard, DF-PAR</td><td>resposta graduada e memória</td></tr>
+<tr><td>Decisões opacas, injustas com clientes fracos</td><td>XI-DDaBA, Trustworthy FL</td><td>explicar cada exclusão</td></tr>
+<tr><td>Holdout limpo não enxerga backdoor</td><td>FLTrust; nosso M3: 0,54</td><td>sonda que não dependa do gatilho</td></tr>
+</table>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">11 · Fontes em IC/artigos e na revisão do entregável 01</p>
+<aside>Cada linha liga um problema da literatura a um requisito concreto. BOBA e Blades mostram que, sob label skew, honestos variam tanto em norma e direção que defesas geométricas os descartam. O Multi-métricas mostra que uma distância só perde força. O Blades e o próprio Apêndice 14 do LP mostram que avaliar sem atacante adaptativo superestima a defesa. FLGuard e DF-PAR trocam o descarte binário por confiança contínua e histórica. XI-DDaBA cobra explicação e imparcialidade. E o nosso próprio RAGNAR mostra o limite do classificador supervisionado.</aside>
+</section>

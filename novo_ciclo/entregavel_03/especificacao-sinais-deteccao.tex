@@ -1,0 +1,614 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage[margin=0.6in]{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{booktabs}
+\usepackage{colortbl}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\usepackage{caption}
+\usepackage{longtable}
+\usepackage{listings}
+\usepackage{seqsplit}
+
+% Cores do Relatório Corporativo (mesma paleta da revisão v2)
+\definecolor{primary}{HTML}{0F2A4A}
+\definecolor{secondary}{HTML}{008080}
+\definecolor{accent}{HTML}{C0392B}
+\definecolor{lightbg}{HTML}{F4F6F7}
+\definecolor{bordergray}{HTML}{BDC3C7}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=primary,
+    filecolor=secondary,
+    urlcolor=secondary,
+    citecolor=primary,
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\fontsize{9}{11}\selectfont\color{primary}\textbf{SINAIS E LÓGICA DE DETECÇÃO: AGENTE EM FL}}
+\fancyhead[R]{\fontsize{9}{11}\selectfont\color{primary}\textbf{ENTREGÁVEL 03 (IC)}}
+\fancyfoot[L]{\fontsize{8}{10}\selectfont\color{gray}Confidencial - Para fins acadêmicos e de pesquisa}
+\fancyfoot[R]{\fontsize{9}{11}\selectfont\color{primary}\textbf{Página \thepage}}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{secondary}\leaders\hrule height 0.6pt\hfill}}
+\renewcommand{\footrule}{\hbox to\headwidth{\color{bordergray!50}\leaders\hrule height 0.4pt\hfill}}
+
+\usepackage{titlesec}
+\titleformat{\section}
+  {\color{primary}\normalfont\large\bfseries}
+  {\thesection}{1em}{}[{\color{secondary}\titlerule[1pt]}]
+\titleformat{\subsection}
+  {\color{secondary}\normalfont\normalsize\bfseries}
+  {\thesubsection}{1em}{}
+
+\newtcolorbox{calloutbox}[1]{
+  colback=lightbg, colframe=secondary, fonttitle=\bfseries\color{white}, coltitle=white,
+  title=#1, boxrule=0.8pt, left=8pt, right=8pt, top=8pt, bottom=8pt, sharp corners
+}
+\newtcolorbox{alertbox}[1]{
+  colback=lightbg, colframe=accent, fonttitle=\bfseries\color{white}, coltitle=white,
+  title=#1, boxrule=0.8pt, left=8pt, right=8pt, top=8pt, bottom=8pt, sharp corners
+}
+
+\lstset{
+  basicstyle=\ttfamily\fontsize{7.5}{9}\selectfont,
+  breaklines=true,
+  frame=single,
+  rulecolor=\color{bordergray},
+  backgroundcolor=\color{lightbg},
+  columns=fullflexible,
+}
+
+\newcommand{\res}{../fl-robustness-lab/results}
+
+\begin{document}
+
+\begin{center}
+    \vspace*{10pt}
+    {\color{primary}\fontsize{20}{24}\selectfont\textbf{ESPECIFICAÇÃO DOS SINAIS E DA LÓGICA DE DETECÇÃO}} \\[8pt]
+    {\color{secondary}\fontsize{13}{16}\selectfont\textbf{Agente para Detecção de Ataques em Cenários de Aprendizado Federado}} \\[12pt]
+    {\color{gray}\fontsize{9}{11}\selectfont\textit{Sinais observáveis pelo servidor, evidência por ataque, regra de decisão e explicação --- mês 3 (setembro/2026)}} \\[8pt]
+    \noindent\makebox[\linewidth]{\color{secondary!50}\rule{\textwidth}{1.2pt}}
+    \vspace*{10pt}
+\end{center}
+
+\section*{Objetivo e Escopo}
+Este é o terceiro entregável do plano de 12 meses. O primeiro sistematizou ataques e defesas em
+Aprendizado Federado (FL), e o segundo validou o ambiente \texttt{fl-robustness-lab} e definiu o cenário
+de avaliação. O plano pede, para o mês 3, a \textbf{especificação dos sinais e da lógica de detecção}: o que
+o agente observa, como transforma essas observações numa decisão por cliente e como justifica essa
+decisão. O protótipo do agente é o entregável do mês 5, e a integração ao fluxo de agregação, o do mês 6.
+
+O ponto de partida é o RAGNAR~\cite{ragnar}, a defesa proposta pelo grupo. Ela é um filtro
+pré-agregação que calcula normas e similaridades das atualizações e as classifica com um XGBoost treinado
+em simulações prévias. O agente aqui especificado é uma evolução do RAGNAR. Os sinais e a lógica
+descritos a seguir foram escolhidos a partir da medição de por que a versão atual falha.
+
+\textbf{Atualização de 30/09.} Foram implementados os cinco ataques recentes da revisão que faltavam no
+laboratório: Mimic~\cite{mimic}, DBA~\cite{dba}, LP e LF~\cite{bclayers} e Edge-case PGD~\cite{edgecase}
+(seção~\ref{sec:recentes}). A análise de sinais e a lógica de detecção foram reavaliadas com eles. Como a
+lógica já estava congelada quando esses ataques foram implementados, eles funcionam como um
+\textbf{teste fora da amostra} da regra.
+
+\begin{calloutbox}{Entregável desta etapa}
+\textbf{(1) Este documento} --- catálogo de sinais (seção~\ref{sec:catalogo}), evidência de quanto cada um
+separa maliciosos de honestos (seção~\ref{sec:evidencia}), especificação da lógica de detecção
+(seção~\ref{sec:logica}) e sua avaliação preliminar (seção~\ref{sec:avaliacao}).\\[4pt]
+\textbf{(2) Código} em \texttt{fl-robustness-lab/}:
+\texttt{src/signals.py} (29 sinais, com a direção esperada de cada um declarada em \texttt{DIRECTION}),
+\texttt{experiments/signal\_analysis.py} (medição dos sinais) e
+\texttt{experiments/detection\_logic.py} (a regra de decisão da seção~\ref{sec:logica}, aplicada aos
+sinais coletados), \texttt{src/attacks/recent.py} (os 5 ataques recentes, com testes em
+\texttt{tests/test\_recent\_attacks.py}) e \texttt{experiments/attack\_effect.py} (efeito de cada ataque
+sem defesa).
+\end{calloutbox}
+
+% =====================================================================
+\section{Modelo de Observação e de Ameaça}
+\label{sec:modelo}
+
+\subsection{O que o servidor observa}
+A cada round $t$, o servidor recebe de cada cliente $i \in \{1,\dots,n\}$ a atualização
+$\Delta_i^t = w_i^t - w^{t-1}$, em que $w^{t-1}$ é o modelo global que ele mesmo enviou. Todo sinal do
+agente é uma função de apenas quatro fontes de informação:
+\begin{enumerate}
+  \item as atualizações do round, $\{\Delta_j^t\}_{j=1}^{n}$;
+  \item o modelo global $w^{t-1}$;
+  \item um \textbf{holdout limpo} $D_s$, um conjunto pequeno de dados rotulados do servidor (100 amostras
+        no cenário), o mesmo pressuposto do FLTrust~\cite{fltrust};
+  \item o \textbf{histórico} do próprio cliente e dos demais em rounds anteriores.
+\end{enumerate}
+O servidor \textbf{não} vê os dados dos clientes. Um sinal que depende de $D_s$ ou do histórico é marcado
+como tal no catálogo, porque são pressupostos adicionais e têm custo.
+
+\subsection{Atacante considerado}
+\begin{itemize}
+  \item Até 20\% dos clientes são maliciosos (10\% no backdoor por pixel, no PGD, no LP e no Edge-case), fixos ao longo do treino e em conluio.
+  \item Os ataques de modelo são \emph{oniscientes}: o atacante vê as atualizações honestas do round e
+        sintetiza a sua (IPM~\cite{ipm}, LIE~\cite{lie}, MinMax/MinSum~\cite{minmax}, Mimic~\cite{mimic}),
+        como no BOBA e no Blades.
+  \item Os ataques recentes exploram vetores mais furtivos: imitar um honesto real (Mimic), dividir o
+        gatilho entre atacantes (DBA), envenenar só as camadas críticas (LP/LF) e usar amostras raras reais
+        em vez de gatilho (Edge-case).
+  \item O atacante \textbf{não} conhece o detector. O caso adaptativo, em que ele otimiza contra os sinais,
+        é o objeto do mês 10.
+\end{itemize}
+
+\subsection{Saída do agente}
+Para cada cliente $i$ e round $t$, o agente devolve três coisas:
+\begin{itemize}
+  \item uma \textbf{decisão} $\in \{\text{aceitar}, \text{excluir da agregação}\}$;
+  \item um \textbf{escore} contínuo $S(i,t)$ e um escore acumulado $C(i,t)$;
+  \item uma \textbf{explicação}: os sinais que motivaram a decisão, com a magnitude de cada um.
+\end{itemize}
+A agregação dos clientes aceitos é a média ponderada (FedAvg), como no RAGNAR.
+
+% =====================================================================
+\section{Catálogo de Sinais}
+\label{sec:catalogo}
+
+Cada sinal é um escalar por cliente por round. Notação: $\bar\Delta^t$ é a média das atualizações do round,
+$\tilde\Delta^t$ a mediana coordenada a coordenada, $\cos(a,b)$ o cosseno e $\ell(w; D_s)$ a perda no holdout.
+A coluna \emph{Dir.} traz a direção esperada para um malicioso, \textbf{declarada antes de ver os dados}
+(\texttt{src/signals.py::DIRECTION}): $\uparrow$ significa valor maior e $\downarrow$ valor menor.
+A coluna \emph{Status} indica em quais ataques o sinal já foi medido (seção~\ref{sec:evidencia}): ``13''
+são todos; ``5'' são só os ataques recentes.
+
+\begin{center}
+\footnotesize
+\begin{longtable}{p{2.5cm}p{6.1cm}p{1.9cm}p{2.5cm}cp{1.3cm}}
+\toprule
+\textbf{Sinal} & \textbf{Definição} & \textbf{Requer} & \textbf{Custo por round} & \textbf{Dir.} & \textbf{Status} \\
+\midrule
+\endhead
+\multicolumn{6}{l}{\textit{Geometria do RAGNAR v1 (distância à média do round)}} \\
+\rowcolor{lightbg} l1/l2/l3\_mean & $\lVert \Delta_i - \bar\Delta \rVert_p$, $p = 1,2,3$ & $\Delta$ & $O(nD)$ & $\uparrow$ & 13 \\
+cos\_mean & $\cos(\Delta_i, \bar\Delta)$ & $\Delta$ & $O(nD)$ & $\downarrow$ & 13 \\
+\rowcolor{lightbg} cos\_global & $\cos(\Delta_i, w^{t-1})$ & $\Delta, w$ & $O(nD)$ & $\downarrow$ & 13 \\
+\multicolumn{6}{l}{\textit{Geometria robusta}} \\
+\rowcolor{lightbg} norm & $\lVert \Delta_i \rVert_2$ & $\Delta$ & $O(nD)$ & $\uparrow$ & 13 \\
+l2\_median & $\lVert \Delta_i - \tilde\Delta \rVert_2$ & $\Delta$ & $O(nD \log n)$ & $\uparrow$ & 13 \\
+\rowcolor{lightbg} cos\_median & $\cos(\Delta_i, \tilde\Delta)$ & $\Delta$ & $O(nD \log n)$ & $\downarrow$ & 13 \\
+mahalanobis & Mahalanobis de $(\text{l1}, \text{l2}, \text{cos})_{\text{mean}}$ & $\Delta$ & $O(nD)$ & $\uparrow$ & 13 \\
+\rowcolor{lightbg} krum\_score & soma das $n-f-2$ menores $\lVert\Delta_i-\Delta_j\rVert^2$~\cite{krum} & $\Delta$ & $O(n^2D)$ & $\uparrow$ & 13 \\
+\multicolumn{6}{l}{\textit{Conluio}} \\
+\rowcolor{lightbg} max\_cos\_peer & $\max_{j \ne i} \cos(\Delta_i, \Delta_j)$ & $\Delta$ & $O(n^2D)$ & $\uparrow$ & 13 \\
+\multicolumn{6}{l}{\textit{Camada crítica}~\cite{bclayers}} \\
+\rowcolor{lightbg} fc1\_l2\_median, fc1\_cos\_median & l2\_median e cos\_median restritos aos pesos de \texttt{fc1} & $\Delta$ & $O(n D_{fc1})$ & $\uparrow$/$\downarrow$ & 13 \\
+\multicolumn{6}{l}{\textit{Referência no servidor}} \\
+\rowcolor{lightbg} holdout\_loss\_gain & $\ell(w^{t-1}+\Delta_i; D_s) - \ell(w^{t-1}; D_s)$ & $D_s$ & $n$ inferências em $D_s$ & $\uparrow$ & 13 \\
+holdout\_acc & acurácia de $w^{t-1}+\Delta_i$ em $D_s$ & $D_s$ & idem & $\downarrow$ & 13 \\
+\rowcolor{lightbg} fltrust\_cos & $\cos(\Delta_i, \Delta_s)$, com $\Delta_s$ o treino do servidor em $D_s$~\cite{fltrust} & $D_s$ & 1 treino local & $\downarrow$ & 13 \\
+\multicolumn{6}{l}{\textit{Histórico}} \\
+\rowcolor{lightbg} hist\_cos\_self & $\cos(\Delta_i^t, \Delta_i^{t-1})$ & histórico & $O(nD)$, memória $nD$ & $\uparrow$ & 13 \\
+hist\_max\_cos\_cum & max\_cos\_peer sobre $\sum_{\tau \le t} \Delta_i^\tau$ (FoolsGold~\cite{foolsgold}) & histórico & $O(n^2D)$ & $\uparrow$ & 13 \\
+\rowcolor{lightbg} hist\_ema\_\-l2\_median & média móvel exponencial do z-score de l2\_median & histórico & $O(n)$ & $\uparrow$ & 13 \\
+\multicolumn{6}{l}{\textit{Formulações robustas (v2)}} \\
+\rowcolor{lightbg} l2/cos\_geomed & distância e cosseno à mediana geométrica (Weiszfeld, ruptura 50\%) & $\Delta$ & $O(nD \cdot \text{iter})$ & $\uparrow$/$\downarrow$ & 5 \\
+mcd\_mahalanobis & Mahalanobis com média e covariância do MCD~\cite{mcd} & $\Delta$ & $O(n)$ & $\uparrow$ & 5 \\
+\rowcolor{lightbg} spectral\_score & projeção$^2$ no 1º vetor singular dos $\Delta$ centrados~\cite{spectral} & $\Delta$ & $O(n^2D)$ & $\uparrow$ & 5 \\
+sign\_agreement & fração de coordenadas com o sinal de $\tilde\Delta$~\cite{signguard} & $\Delta$ & $O(nD)$ & $\downarrow$ & 5 \\
+\rowcolor{lightbg} holdout\_max\_\-class\_gain, \_class\_\-excess, \_js & piora de perda por classe em $D_s$; divergência JS das predições & $D_s$ & $n$ inferências & $\uparrow$ & 5 \\
+cusum\_* & CUSUM~\cite{cusum} de $|z|$ de cos\_median e l2\_median & histórico & $O(n)$ & $\uparrow$ & 5 \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+\noindent $D$ é o número de parâmetros do modelo e $n$ o número de clientes do round. Os sinais v2 foram
+medidos nos 5 ataques recentes, cuja coleta já os incluía. Medi-los também nos 8 ataques originais exige
+repetir aquela coleta (cerca de 60 minutos na CPU).
+
+% =====================================================================
+\section{Ataques Recentes Implementados}
+\label{sec:recentes}
+
+A revisão (entregável 01) cobre ataques mais recentes do que os 8 avaliados até 29/09. Os cinco que
+faltavam foram implementados em \texttt{src/attacks/recent.py}, seguindo o mecanismo de cada artigo, com
+as simplificações listadas abaixo.
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Ataques recentes: mecanismo e implementação no laboratório.}
+\label{tab:recentes}
+\begin{tabular}{p{2.3cm}p{2.5cm}p{6.2cm}p{5.2cm}}
+\toprule
+\textbf{Ataque} & \textbf{Referência} & \textbf{Mecanismo implementado} & \textbf{Simplificação} \\
+\midrule
+\rowcolor{lightbg} Mimic & Karimireddy et al., ICLR 2022~\cite{mimic} & os 4 atacantes enviam, em todos os rounds, a atualização real do honesto que mais se projeta na direção de maior variância dos honestos (escolhido no 1º round) & nenhuma relevante \\
+DBA & Xie et al., ICLR 2020~\cite{dba} & gatilho global 4$\times$4 dividido em 4 faixas 1$\times$4; o atacante $k$ usa só a faixa $k$; avaliação com o gatilho completo & 4 atacantes fixos (no artigo, rodízio) \\
+\rowcolor{lightbg} LP & Zhuang et al., ICLR 2024~\cite{bclayers} & treino limpo e com backdoor; camadas críticas achadas por substituição de camadas (gulosa, até 80\% do sucesso do modelo envenenado); envia o delta limpo com só essas camadas envenenadas & sem o ajuste adaptativo de $\lambda$ do artigo \\
+LF & idem & versão não direcionada: inverte a direção do delta só nas (até 2) camadas cuja inversão mais derruba a acurácia local & idem \\
+\rowcolor{lightbg} Edge-case PGD & Wang et al., NeurIPS 2020~\cite{edgecase} & amostras raras reais sem gatilho: os 5\% de aviões no extremo do 1º componente principal (aviões escuros) rotulados como caminhão, retirados dos honestos; atacante mistura 1:1 com dados limpos; PGD + escala $\times 3$ com norma limitada & modo raro do próprio CIFAR-10 em vez de imagens externas (aviões da Southwest) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Os ataques funcionam?}
+Antes de medir a detecção, cada ataque foi executado sem defesa (FedAvg, 40 rounds). A taxa de sucesso
+(ASR) é comparada com a de um modelo limpo, treinado sem atacantes: quanto ele já prevê como alvo por
+acaso.
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Efeito de cada ataque sem defesa (semente 42). $\Delta$MA em relação ao FedAvg sem ataque
+(72,8\%). Asterisco: ataques recentes.}
+\label{tab:efeito}
+\input{\res/attack_effect/effect.tex}
+\end{table}
+
+\begin{itemize}
+  \item \textbf{LP e DBA são backdoors funcionais e furtivos.} O LP chega a 50\% de sucesso (base 2,5\%)
+        sem tocar a acurácia ($-$0,2 p.p.). As camadas críticas escolhidas foram quase sempre
+        \texttt{fc1} e a última convolução (64 e 61 de 80 escolhas), o mesmo padrão do artigo. O DBA chega a
+        42\%, mesmo com cada atacante treinando só um quarto do gatilho.
+  \item \textbf{Mimic e LF degradam a acurácia} em 3--4 p.p., na mesma faixa de LIE, MinMax e MinSum.
+  \item \textbf{O Edge-case é fraco nesta configuração}: 8\% de sucesso final contra 2\% da base (4 contra
+        1 das 50 imagens raras do teste), embora fique consistentemente acima da base ao longo do treino.
+        Foram três versões documentadas (\url{results/arquivo_edge_v1/}):
+        \begin{enumerate}
+          \item cauda radial da classe, diluída em todos os dados locais: 4\%;
+          \item modo raro coerente com mistura 1:1, mas com o peso declarado no FedAvg reduzido por engano
+                a $\sim$1/5 do normal: 2\%; sem limite de norma, 4\%;
+          \item peso corrigido (o atacante declara o tamanho normal dos seus dados): 8\%.
+        \end{enumerate}
+        A interpretação provável é que, numa CNN pequena e com as amostras raras vindas da mesma
+        distribuição dos aviões honestos, 2 atacantes em 20 não conseguem sustentar a exceção. O artigo
+        usa imagens externas e modelos maiores. Os sinais do Edge-case continuam medidos (seção
+        \ref{sec:evidencia}): o ataque é \emph{detectável}, ainda que pouco danoso aqui.
+\end{itemize}
+
+% =====================================================================
+\section{Evidência: Quanto Cada Sinal Separa Maliciosos de Honestos}
+\label{sec:evidencia}
+
+\subsection{Protocolo}
+\begin{itemize}
+  \item \textbf{Cenário}: o do entregável 02, isto é, CIFAR-10, CNN pequena, 20 clientes, Dirichlet
+        $\alpha = 0{,}5$, 1 época local, SGD com $\text{lr} = 0{,}01$, holdout de 100 amostras, semente 42
+        e 15 rounds por ataque.
+  \item \textbf{Ataques}: ruído gaussiano ($\sigma = 5$), IPM ($\varepsilon = 1$), LIE ($z = 1{,}5$),
+        MinMax, MinSum e \emph{label flip} (0$\to$2), com 4 maliciosos; backdoor por pixel e backdoor PGD
+        com norma limitada, com 2 maliciosos. A esses 8 somam-se os 5 ataques recentes da
+        seção~\ref{sec:recentes}.
+  \item \textbf{Agregação oráculo}: o modelo global é atualizado só com os clientes honestos. Todos os
+        ataques são observados sobre a mesma trajetória de treino, de modo que se mede a
+        \emph{detectabilidade} do ataque, e não o estrago que ele causaria.
+  \item \textbf{Métrica}: AUC-ROC calculada \emph{dentro de cada round}, que é a decisão que o servidor
+        precisa tomar, com média entre os rounds.
+\end{itemize}
+
+\begin{alertbox}{Correção em relação à versão apresentada em 28/09}
+A tabela anterior reportava a \emph{separabilidade} $\max(\text{AUC}, 1-\text{AUC})$. Essa medida escolhe,
+\textbf{para cada ataque e depois de ver o resultado}, a direção em que o sinal funciona, e um detector
+real não pode fazer isso. Ela superestima o que um detector consegue: cos\_median, por exemplo, aparecia
+com 0,90 de média e, na direção declarada, tem 0,44. Aqui a AUC é reportada \textbf{na direção
+declarada a priori}. Um valor abaixo de 0,5 significa que o ataque \emph{inverte} o sinal: o malicioso
+fica do lado oposto ao esperado.
+\end{alertbox}
+
+\subsection{Resultados}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{\res/signals/auc_heatmap.png}
+\caption{AUC por sinal e ataque, na direção declarada. Azul: o sinal detecta. Vermelho: o ataque inverte o
+sinal. As duas últimas colunas trazem a média e o pior caso entre os 13 ataques; as cinco colunas
+antes delas são os ataques recentes.}
+\label{fig:heatmap}
+\end{figure}
+
+\begin{table}[htbp]
+\centering
+\caption{AUC do escore \textbf{bilateral} $|z|$, o desvio da mediana do round em qualquer sentido, sem
+direção. Em negrito, os valores abaixo de 0,5.}
+\label{tab:bilateral}
+\resizebox{\textwidth}{!}{\input{\res/signals/auc_bilateral.tex}}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Sinais v2 (formulações robustas), medidos só nos 5 ataques recentes, na direção declarada.}
+\label{tab:v2}
+\resizebox{0.85\textwidth}{!}{\input{\res/signals/auc_table_v2.tex}}
+\end{table}
+
+\subsection{Achados}
+\begin{enumerate}
+  \item \textbf{Nenhum sinal isolado cobre todos os ataques.} No pior caso entre os 13 ataques, só
+        mahalanobis fica acima de 0,5 na direção declarada (0,52, no Mimic). Até max\_cos\_peer, o melhor
+        em média (0,86), se inverte no LF (0,07). Um detector precisa \emph{combinar} sinais de famílias
+        diferentes.
+
+  \item \textbf{Os ataques de modelo se escondem no centro.} LIE, MinMax e MinSum constroem o vetor
+        malicioso para ficar dentro da nuvem honesta. O resultado é que o malicioso fica \emph{mais}
+        alinhado com a mediana do que um honesto típico: cos\_median, na direção declarada, tem AUC 0,00
+        nos três ataques. O IPM faz o contrário e aponta para o lado oposto (AUC 1,00). Um cosseno lido
+        numa direção só falha em metade dos ataques. Lido como desvio \emph{bilateral} (``diferente
+        demais'' ou ``típico demais''), ele sobe para média 0,84, com pior caso 0,57 entre os 13 ataques
+        (tabela~\ref{tab:bilateral}). O Mimic produz o mesmo efeito por outro caminho: as quatro cópias
+        mais o cliente imitado puxam a mediana para eles (cos\_median 0,03 na direção declarada).
+
+  \item \textbf{As normas devem ser lidas numa direção só.} No escore bilateral elas pioram: l2\_median
+        vai para 0,08 no MinMax, porque o atacante fica no centro e tem desvio \emph{menor} que os honestos
+        não-IID. As normas falham no backdoor PGD (0,46--0,58), que limita a norma de propósito, e no IPM,
+        cujo vetor tem norma pequena.
+
+  \item \textbf{A referência no servidor cobre o que a geometria não pega.} O ganho de perda no holdout
+        separa perfeitamente o backdoor PGD (1,00) e o LIE (1,00). Ele se inverte, porém, no IPM (0,02) e
+        fica fraco no MinMax e no MinSum. A acurácia no holdout é mais estável (média 0,82).
+
+  \item \textbf{Os sinais de conluio são os mais fortes, mas também os mais frágeis.} max\_cos\_peer tem
+        média 0,86, mas depende de os atacantes enviarem vetores quase idênticos. O LF já mostra a
+        fragilidade: cada atacante inverte as camadas da \emph{sua} atualização, os atacantes ficam menos
+        parecidos com todos, e o sinal se inverte (0,07). Por isso a lógica é avaliada com e sem esses
+        sinais.
+
+  \item \textbf{O label flip continua sem sinal confiável.} O melhor sinal é hist\_cos\_self, com 0,76, e
+        vários ficam em torno de 0,5. O ataque afeta uma classe só, o que motiva os sinais por classe no
+        holdout (v2), ainda não medidos.
+
+  \item \textbf{A regra muda com a fase do treino.} No backdoor por pixel, cos\_mean tem AUC 0,21 nos
+        rounds 2--7 e 0,87 nos rounds 8--15. Um classificador treinado só nos primeiros rounds, como o
+        RAGNAR v1, aplica depois a regra invertida. Treinado nos rounds 2--5 e testado a partir do round 8
+        contra um ataque que não viu, o classificador com as 4 features do RAGNAR tem:
+        \begin{itemize}
+          \item sem normalização: AUC 0,48 e 44\% de falsos positivos;
+          \item com as mesmas features normalizadas no round (z robusto): AUC 0,68 e 3\% de falsos
+                positivos;
+          \item com 10 sinais normalizados: AUC 0,90--0,91.
+        \end{itemize}
+        A \textbf{normalização dentro do round} é, portanto, um requisito da lógica.
+
+  \item \textbf{Cada ataque recente escapa de uma família diferente.}
+        \begin{itemize}
+          \item \textbf{Mimic} envia a atualização real de um honesto: escapa dos cossenos (0,03), do
+                holdout (0,52) e do Mahalanobis (0,52). É pego pelo conluio, pela norma (0,97, porque o
+                cliente imitado é o mais extremo) e pelo escore espectral (0,97).
+          \item \textbf{LF} mexe só na direção de poucas camadas: escapa das normas (0,41--0,49) e do
+                conluio, mas é pego pelos cossenos (cos\_global 0,98, fc1\_cos\_median 0,92) e pela
+                concordância de sinais (0,93).
+          \item \textbf{LP e DBA} são backdoors invisíveis no holdout limpo (0,54--0,63), mas
+                deslocam as normas e a dispersão (fc1\_l2\_median 0,97 no LP; espectral 0,97 e MCD 0,94
+                no DBA).
+          \item \textbf{Edge-case} limita a norma (0,45--0,56) e é pego pelo holdout: ganho de perda e
+                piora por classe chegam a 1,00.
+        \end{itemize}
+        Isso reforça o achado 1 e confirma a escolha de famílias complementares na lógica.
+\end{enumerate}
+
+% =====================================================================
+\section{Lógica de Detecção}
+\label{sec:logica}
+
+A lógica segue diretamente dos achados. Ela é especificada como uma regra \textbf{sem treino}, que é a
+versão 0 do agente e pode ser auditada. Existe também uma variante com classificador (seção~\ref{sec:varB}).
+
+\subsection{Etapas}
+\begin{enumerate}
+  \item \textbf{Extração.} Para cada cliente, os sinais $s_k(i,t)$ do conjunto ativo
+        (tabela~\ref{tab:regra}). Um sinal indisponível, como o histórico no round 1, não acusa ninguém.
+
+  \item \textbf{Normalização no round} (achado 7). O z-score robusto
+        \[ z_k(i,t) = \frac{s_k(i,t) - \operatorname{med}_j s_k(j,t)}{1{,}4826 \cdot \operatorname{MAD}_j s_k(j,t)} \]
+        independe da escala do ambiente e da fase do treino. Com mediana e MAD, os próprios atacantes
+        não deslocam a referência enquanto forem menos da metade.
+
+  \item \textbf{Evidência por sinal} (achados 2 e 3). Cada sinal tem um modo fixo:
+        \begin{itemize}
+          \item unilateral: $e_k = \max(0,\, d_k\, z_k)$, com $d_k$ a direção declarada;
+          \item bilateral: $e_k = |z_k|$.
+        \end{itemize}
+
+  \item \textbf{Escore instantâneo e explicação.} O escore é $S(i,t) = \max_k e_k(i,t)$. O sinal que
+        atinge o máximo, com seu valor de $z$, é a explicação principal da decisão. Os demais $e_k > \tau$
+        entram como evidência secundária.
+
+  \item \textbf{Acúmulo entre rounds}, para sinais fracos mas persistentes. O CUSUM~\cite{cusum} sobre o
+        excesso em relação ao nível típico do round é
+        \[ C(i,t) = \max\bigl(0,\; C(i,t-1) + S(i,t) - \operatorname{med}_j S(j,t) - \kappa\bigr). \]
+        Descontar a mediana de $S$ é necessário porque o máximo de $K$ escores $|z|$ de um cliente honesto
+        já passa de 1. Com $\kappa$ fixo, o CUSUM deriva para cima: na avaliação, os falsos positivos
+        subiram de 9\% para 12\%.
+
+  \item \textbf{Decisão.} O cliente é excluído se $S > \tau$ ou $C > h$.
+        \begin{itemize}
+          \item No máximo $\lfloor (n-1)/2 \rfloor$ clientes são excluídos por round, os de maior escore.
+          \item Diferentemente do RAGNAR atual, a regra \textbf{nunca} ``aceita todos'' quando muitos são
+                marcados.
+          \item O filtro atua \textbf{desde o round 1}.
+        \end{itemize}
+        As duas escolhas corrigem a falha observada no ruído gaussiano. No RAGNAR v1, o round 1 sem filtro
+        destrói o modelo, e a partir daí todos os clientes parecem anômalos e são aceitos. Por isso a
+        acurácia fica em 10\% em todos os braços.
+\end{enumerate}
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Conjunto de sinais e modo de cada um na regra proposta. Parâmetros fixados a priori:
+$\tau = 3$ (três desvios robustos), $\kappa = 0{,}5$, $h = 6$.}
+\label{tab:regra}
+\begin{tabular}{p{3.2cm}p{2.6cm}p{2.9cm}p{7.2cm}}
+\toprule
+\textbf{Sinal} & \textbf{Família} & \textbf{Modo} & \textbf{Justificativa} \\
+\midrule
+\rowcolor{lightbg} norm & geometria & unilateral $\uparrow$ & ruído e atualizações escaladas \\
+mahalanobis & geometria & unilateral $\uparrow$ & maior pior caso entre os sinais sem conluio (0,64) \\
+\rowcolor{lightbg} cos\_median & geometria robusta & bilateral & IPM (oposto) e LIE/MinMax/MinSum (``típico demais'') \\
+fc1\_cos\_median & camada crítica & bilateral & idem, na camada que concentra o backdoor \\
+\rowcolor{lightbg} holdout\_loss\_gain & servidor & unilateral $\uparrow$ & backdoor PGD e LIE \\
+holdout\_acc & servidor & unilateral $\downarrow$ & estável entre ataques (média 0,82) \\
+\rowcolor{lightbg} hist\_cos\_self & histórico & bilateral & persistência (backdoor) e aleatoriedade (ruído) \\
+\midrule
+max\_cos\_peer, hist\_max\_cos\_cum & conluio & unilateral $\uparrow$ & só na variante ``+conluio'' (achado 5) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Variante com classificador (RAGNAR evoluído)}
+\label{sec:varB}
+A etapa 4 pode ser substituída por um classificador treinado sobre os $z_k$ normalizados, e não sobre as
+features absolutas como no RAGNAR original. Para isso ele precisa ser treinado com dados que cubram
+\textbf{todas as fases} do treino. O achado 7 mostra que essa variante chega a AUC 0,90 contra ataque não
+visto, com 2--5\% de falsos positivos. As etapas 5 e 6 e a explicação (contribuição de cada sinal, por
+exemplo via SHAP) valem para as duas variantes. A escolha entre elas é do mês 5.
+
+% =====================================================================
+\section{Avaliação Preliminar da Lógica}
+\label{sec:avaliacao}
+
+A regra da seção~\ref{sec:logica} foi aplicada aos sinais já coletados na seção~\ref{sec:evidencia}, sem
+novo treino (\url{experiments/detection_logic.py}, que roda em segundos). A linha de base é a mesma
+regra usando só as 4 features do RAGNAR v1, na direção declarada. Recall e FP são frações dos pares
+(cliente, round) excluídos.
+
+\begin{table}[htbp]
+\centering
+\caption{Regra sem treino: AUC do escore instantâneo $S$ e recall e falsos positivos da decisão final
+(com CUSUM). Acima, os 8 ataques usados ao desenhar a regra; abaixo, os 5 ataques recentes, implementados
+com a regra já congelada (fora da amostra).}
+\label{tab:logica}
+\resizebox{\textwidth}{!}{\input{\res/detection_logic/summary.tex}}
+\end{table}
+
+\noindent\textbf{Nos 8 ataques do desenho:}
+\begin{itemize}
+  \item \textbf{Proposta contra RAGNAR-4:} AUC 0,95 contra 0,78 e recall 0,86 contra 0,37, com 9\% de
+        falsos positivos contra 5\%. O maior ganho está onde o RAGNAR-4 não detecta nada: LIE, MinMax e
+        MinSum (recall 0 $\to$ 0,87--0,93) e backdoor PGD (0,10 $\to$ 1,00).
+  \item \textbf{Sem os sinais de conluio}, a proposta perde pouco: recall 0,86 contra 0,90. A detecção,
+        portanto, não depende só de os atacantes serem idênticos.
+  \item \textbf{O CUSUM ainda não se justificou.} Só o escore instantâneo dá recall 0,82 com 5\% de falsos
+        positivos. O acúmulo acrescenta 4 pontos de recall ao custo de 4 pontos de falsos positivos. Com 15
+        rounds não há horizonte para o acúmulo mostrar valor. Ele fica na especificação como componente a
+        validar nos experimentos longos (meses 7--9).
+  \item \textbf{Os falsos positivos se concentram} no MinMax e no MinSum (15\%). O \textbf{label flip}
+        continua fraco: AUC 0,64 e recall 0,33 com 10\% de falsos positivos.
+  \item \textbf{Explicações.} O sinal que mais motiva as detecções corretas muda com o ataque:
+        \begin{itemize}
+          \item ganho de perda no holdout para PGD, LIE e ruído;
+          \item cos\_median para IPM, MinMax e MinSum;
+          \item hist\_cos\_self para o backdoor por pixel.
+        \end{itemize}
+        Isso confirma que a combinação é necessária e que a explicação produzida é informativa
+        (\url{results/detection_logic/explanations.csv}).
+\end{itemize}
+
+\noindent\textbf{Nos 5 ataques recentes (fora da amostra):}
+\begin{itemize}
+  \item \textbf{A vantagem se mantém, com custo maior.}
+
+        \begin{tabular}{lccc}
+          \toprule
+          Regra & AUC & Recall & Falsos positivos \\
+          \midrule
+          Proposta & 0,88 & 0,72 & 15\% \\
+          Proposta + conluio & 0,93 & 0,85 & 15\% \\
+          Mesma regra com o RAGNAR-4 & 0,70 & 0,34 & 9\% \\
+          \bottomrule
+        \end{tabular}
+
+        Nos 8 ataques do desenho, a proposta tinha AUC 0,95 e recall 0,86. A queda fora da amostra
+        mostra quanto daqueles números vinha de a regra ter sido desenhada com os mesmos dados.
+  \item \textbf{O Mimic é o caso mais difícil sem os sinais de conluio:} recall 0,60 com 29\% de falsos
+        positivos. Ao imitar um honesto real, o atacante faz o próprio cliente imitado (e os parecidos com
+        ele) se destacar tanto quanto os atacantes.
+  \item \textbf{O DBA escapa da proposta sem conluio} (recall 0,38). Com os sinais de conluio, o recall
+        sobe para 0,70: os quatro atacantes treinam com o mesmo alvo e ficam parecidos entre si.
+  \item \textbf{LF, LP e Edge-case são detectados} (recall 0,77--1,00). As explicações mudam de família
+        conforme o ataque: fc1\_cos\_median no LF e no Mimic, hist\_cos\_self e mahalanobis no LP,
+        ganho de perda no holdout no Edge-case. É o comportamento esperado de uma regra que combina
+        famílias.
+  \item \textbf{Os falsos positivos subiram para 15\%.} Com o limiar fixo $\tau = 3$ e o máximo sobre 7
+        sinais, a taxa de falsos positivos depende do ataque. Isso reforça a calibração do limiar por
+        predição conforme (mês 9).
+\end{itemize}
+
+\begin{alertbox}{Como ler estes números}
+São \textbf{evidência de viabilidade, não validação}. Nos 8 ataques do desenho, o modo de cada sinal
+(uni ou bilateral) foi escolhido olhando a análise da seção~\ref{sec:evidencia}, feita com os mesmos
+dados. Os 5 ataques recentes não têm esse viés, mas usam a mesma semente e o mesmo cenário. A agregação é oráculo, não há
+efeito de retroalimentação da exclusão sobre o modelo, os runs têm 15 rounds e a semente é única. Com 4
+maliciosos por round, a AUC de um round varia em passos de $1/64$. A validação exige outra semente e o
+agente atuando de fato na agregação (meses 6--9).
+\end{alertbox}
+
+% =====================================================================
+\section{Contexto: o RAGNAR v1 com o Filtro Ativo}
+\label{sec:ragnar}
+Para situar a proposta, o RAGNAR v1 do laboratório (4 features, XGBoost treinado em 5 rounds simulados a
+partir do modelo inicial) foi avaliado com o filtro ativo, em 40 rounds, contra os 8 ataques.
+\begin{itemize}
+  \item \textbf{Com a família do ataque excluída do treino} (ataque não visto), ele não protege:
+        \begin{itemize}
+          \item recall 0 nos ataques de modelo;
+          \item nos backdoors, exclui cerca de metade dos honestos; a acurácia cai de 72\% para 57--58\% e
+                o backdoor fica \emph{mais} forte (sucesso de 75\% para 94\% no ataque por pixel).
+        \end{itemize}
+  \item \textbf{Com todos os ataques no treino}, inclusive o avaliado (braço
+        \texttt{ragnar\_pool\_todos}), a detecção melhora (F1 0,38--0,55 nos ataques de modelo). Mesmo
+        assim, a acurácia final fica \emph{abaixo} da do FedAvg sem defesa em todos os ataques, porque a
+        maioria dos honestos é excluída nos rounds finais.
+\end{itemize}
+Esse quadro é coerente com os achados 2 e 7: features absolutas lidas numa só direção, com um
+classificador treinado numa fase do treino e aplicado em outra.
+
+\emph{Nota de rastreabilidade:} as execuções desse último braço foram rotuladas por engano como
+``ataque visto'' (\texttt{ragnar\_seen}) até 29/09. Elas rodaram com o pool completo de ataques, e não só
+com o avaliado, e foram renomeadas para \texttt{ragnar\_pool\_todos}. O braço ``visto'' propriamente dito
+(treino só com o ataque avaliado) ainda não foi executado. A comparação com o RAGNAR do artigo
+(CoUrb-2024, 54 features, classificador pré-treinado) está em andamento em \texttt{courb\_eval/}.
+
+% =====================================================================
+\section{Limitações e Próximos Passos}
+\begin{itemize}
+  \item \textbf{Uma semente e um cenário} (CIFAR-10, $\alpha = 0{,}5$). Diferenças pequenas podem ser ruído.
+        Label skew severo ($\alpha = 0{,}1$) ainda não foi testado.
+  \item \textbf{Os 10 sinais v2 só foram medidos nos ataques recentes.} Medi-los nos 8 originais exige
+        repetir aquela coleta (cerca de 60 minutos na CPU). Os sinais por classe são os candidatos para o
+        label flip: no Edge-case, que também afeta uma classe, chegaram a 1,00.
+  \item \textbf{O Edge-case é fraco nesta configuração} (seção~\ref{sec:recentes}). Uma versão com
+        imagens raras externas ao CIFAR-10, como no artigo, fica para o mês 4.
+  \item \textbf{O label flip precisa de uma métrica de efeito.} O ataque não altera a acurácia global
+        (72,3\% contra 72,8\% sem ataque). Será acrescentada a acurácia da classe de origem no mês 4.
+  \item \textbf{O limiar fixo não controla os falsos positivos.} Calibrar $\tau$ por predição conforme
+        (FP $\le \alpha$ garantido) é o objeto do mês 9.
+  \item \textbf{Os ataques não são adaptativos}, e os sinais de conluio são os primeiros que um atacante
+        adaptativo contornaria (mês 10).
+\end{itemize}
+
+\begin{calloutbox}{Encadeamento com os próximos meses}
+\textbf{M4}: ataques injetáveis: os 13 já estão implementados e 12 têm efeito medido; faltam a métrica de
+efeito do label flip, a correção da injeção do ruído gaussiano e um Edge-case mais forte.
+\textbf{M5}: protótipo do agente com a lógica da seção~\ref{sec:logica}, em duas variantes: regra sem
+treino e classificador sobre os sinais normalizados.
+\textbf{M6}: agente integrado à agregação, com o filtro ativo desde o round 1.
+\end{calloutbox}
+
+\begin{thebibliography}{99}
+\bibitem{ragnar} Morais, M. et al. \textit{RAGNAR: Lightweight Defense against Poisoning Attacks in Federated LLMs and IoT}. CoUrb, 2024.
+\bibitem{fltrust} Cao, X. et al. \textit{FLTrust: Byzantine-robust Federated Learning via Trust Bootstrapping}. NDSS, 2021.
+\bibitem{ipm} Xie, C.; Koyejo, O.; Gupta, I. \textit{Fall of Empires: Breaking Byzantine-tolerant SGD by Inner Product Manipulation}. UAI, 2019.
+\bibitem{lie} Baruch, G.; Baruch, M.; Goldberg, Y. \textit{A Little Is Enough: Circumventing Defenses for Distributed Learning}. NeurIPS, 2019.
+\bibitem{minmax} Shejwalkar, V.; Houmansadr, A. \textit{Manipulating the Byzantine: Optimizing Model Poisoning Attacks and Defenses for Federated Learning}. NDSS, 2021.
+\bibitem{krum} Blanchard, P. et al. \textit{Machine Learning with Adversaries: Byzantine Tolerant Gradient Descent}. NeurIPS, 2017.
+\bibitem{bclayers} Zhuang, H. et al. \textit{Backdoor Federated Learning by Poisoning Backdoor-Critical Layers}. ICLR, 2024.
+\bibitem{foolsgold} Fung, C.; Yoon, C. J. M.; Beschastnikh, I. \textit{The Limitations of Federated Learning in Sybil Settings}. RAID, 2020.
+\bibitem{mcd} Rousseeuw, P. J.; Van Driessen, K. \textit{A Fast Algorithm for the Minimum Covariance Determinant Estimator}. Technometrics, 1999.
+\bibitem{spectral} Tran, B.; Li, J.; Madry, A. \textit{Spectral Signatures in Backdoor Attacks}. NeurIPS, 2018.
+\bibitem{signguard} Xu, J. et al. \textit{SignGuard: Byzantine-robust Federated Learning through Collaborative Malicious Gradient Filtering}. ICDCS, 2022.
+\bibitem{cusum} Page, E. S. \textit{Continuous Inspection Schemes}. Biometrika, 1954.
+\bibitem{mimic} Karimireddy, S. P.; He, L.; Jaggi, M. \textit{Byzantine-Robust Learning on Heterogeneous Datasets via Bucketing}. ICLR, 2022.
+\bibitem{dba} Xie, C.; Huang, K.; Chen, P.-Y.; Li, B. \textit{DBA: Distributed Backdoor Attacks against Federated Learning}. ICLR, 2020.
+\bibitem{edgecase} Wang, H. et al. \textit{Attack of the Tails: Yes, You Really Can Backdoor Federated Learning}. NeurIPS, 2020.
+\end{thebibliography}
+
+\end{document}

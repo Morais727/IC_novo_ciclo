@@ -1,0 +1,13 @@
+# Réplica fiel do artigo LP — dependências (versões iguais às do venv que funciona nesta máquina).
+# torch/torchvision são builds CUDA 12.1: instale com o índice extra (ver LEIA-ME.md, passo 2).
+torch==2.5.1+cu121
+torchvision==0.20.1+cu121
+numpy==2.4.6
+scipy==1.17.1
+scikit-learn==1.9.0
+scikit-image==0.26.0
+matplotlib==3.11.1
+hdbscan==0.8.44
+opencv-python-headless==5.0.0.93
+pandas==3.0.5
+tqdm==4.70.0

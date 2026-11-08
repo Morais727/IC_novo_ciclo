@@ -1,0 +1,141 @@
+% Tema beamer com a identidade visual H.IAAC (reproduz apresentação_2025.pptx)
+%   \usetheme{hiaac}
+%   capa:      \hiaactitlepage   (onda laranja, ilustração, logos de parceiros)
+%   seção:     \hiaacsection{Título}{Subtítulo}
+%   conteúdo:  frames normais — título na caixa azul-marinho; \framesubtitle vira faixa cinza
+%   encerra:   \hiaacclosing{Texto}
+\ProvidesPackage{beamerthemehiaac}
+\RequirePackage{tikz}
+\RequirePackage{calc}
+\RequirePackage[sfdefault]{roboto}
+\usetikzlibrary{calc}
+
+% --- paleta extraída do .pptx
+\definecolor{hiaacnavy}{HTML}{071F4A}
+\definecolor{hiaacorange}{HTML}{FD9B1F}
+\definecolor{hiaacbar}{HTML}{FF7519}
+\definecolor{hiaacgray}{HTML}{9E9E9E}
+\definecolor{hiaaclight}{HTML}{F3F3F3}
+\definecolor{hiaacpurple}{HTML}{8A05FF}
+
+\newcommand{\hiaacdir}{identidade}
+
+\setbeamertemplate{navigation symbols}{}
+\setbeamercolor{normal text}{fg=black}
+\setbeamercolor{structure}{fg=hiaacnavy}
+\setbeamercolor{alerted text}{fg=hiaacbar}
+\setbeamercolor{block title}{bg=hiaacnavy,fg=white}
+\setbeamercolor{block body}{bg=hiaaclight,fg=black}
+\setbeamercolor{block title alerted}{bg=hiaacbar,fg=white}
+\setbeamercolor{block body alerted}{bg=hiaaclight,fg=black}
+\setbeamerfont{block title}{series=\bfseries}
+\setbeamertemplate{blocks}[default]
+\setbeamertemplate{itemize item}{\color{hiaacbar}\raisebox{0.15ex}{\scalebox{0.8}{$\blacksquare$}}}
+\setbeamertemplate{itemize subitem}{\color{hiaacgray}\raisebox{0.2ex}{\scalebox{0.6}{$\blacksquare$}}}
+\setbeamertemplate{enumerate item}{\color{hiaacbar}\bfseries\insertenumlabel.}
+\setbeamersize{text margin left=0.9cm, text margin right=0.9cm}
+
+% --- título do frame: caixa azul-marinho no canto superior esquerdo (+ faixa cinza opcional)
+\setbeamertemplate{frametitle}{%
+  \vspace*{-0.15cm}%
+  \begin{tikzpicture}[remember picture, overlay]
+    \node[anchor=north west, fill=hiaacnavy, text=white, font=\Large\bfseries,
+          minimum height=1.05cm, inner xsep=0.9cm]
+          (ft) at ($(current page.north west)+(0,-0.35cm)$)
+          {\makebox[\maxof{\widthof{\insertframetitle}}{0.6\paperwidth-1.8cm}][l]{\insertframetitle}};
+    \ifx\beamer@framesubtitle\@empty\else
+      \node[anchor=north west, fill=hiaacgray, text=hiaacnavy, font=\small\bfseries,
+            minimum height=0.6cm, inner xsep=0.9cm, align=left]
+            at ($(ft.south west)+(0.2cm,0)$) {\insertframesubtitle};
+    \fi
+  \end{tikzpicture}%
+  \vspace{\ifx\beamer@framesubtitle\@empty 1.05cm\else 1.55cm\fi}%
+}
+
+% --- rodapé: barra laranja à esquerda e número da página à direita
+\setbeamertemplate{footline}{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[hiaacbar] (current page.south west) rectangle ++(0.28\paperwidth, 0.12cm);
+    \node[anchor=south east, text=hiaacgray, font=\tiny] at ($(current page.south east)+(-0.35cm,0.2cm)$)
+          {\insertframenumber};
+  \end{tikzpicture}%
+}
+
+% --- onda laranja da capa
+\newcommand{\hiaacwave}{%
+  \fill[hiaacorange]
+    (current page.south west) ++(0,0.19\paperheight)
+    -- ++(0,0.53\paperheight)
+    .. controls ($(current page.south west)+(0.33\paperwidth,0.62\paperheight)$)
+       and ($(current page.south west)+(0.62\paperwidth,0.86\paperheight)$)
+    .. ($(current page.south west)+(\paperwidth,0.76\paperheight)$)
+    -- ($(current page.south west)+(\paperwidth,0.19\paperheight)$) -- cycle;
+}
+\newcommand{\hiaacpartners}{%
+  \node[anchor=center] at ($(current page.south west)+(0.5\paperwidth,0.095\paperheight)$) {%
+    \includegraphics[height=0.55cm]{\hiaacdir/logo_ic.png}\hspace{0.55cm}%
+    \includegraphics[height=0.55cm]{\hiaacdir/logo_feec.png}\hspace{0.55cm}%
+    \includegraphics[height=0.42cm]{\hiaacdir/logo_softex.png}\hspace{0.55cm}%
+    \includegraphics[height=0.5cm]{\hiaacdir/logo_eldorado.png}\hspace{0.55cm}%
+    \includegraphics[height=0.45cm]{\hiaacdir/logo_mcti.png}\hspace{0.55cm}%
+    \includegraphics[height=0.55cm]{\hiaacdir/logo_unicamp.png}};
+}
+
+\newcommand{\hiaactitlepage}{%
+  {\setbeamertemplate{footline}{}
+  \begin{frame}[plain]
+    \begin{tikzpicture}[remember picture, overlay]
+      \hiaacwave
+      \hiaacpartners
+      \node[anchor=north] at ($(current page.north)+(0.12\paperwidth,-0.3cm)$)
+            {\includegraphics[height=1.55cm]{\hiaacdir/logo_hiaac.png}};
+      \node[anchor=north west] at ($(current page.north west)+(0.3cm,-0.25cm)$)
+            {\includegraphics[height=1.05cm]{\hiaacdir/icone_aprendizado_distribuido.png}};
+      \node[anchor=west] at ($(current page.west)+(0.1cm,0.35cm)$)
+            {\includegraphics[width=0.3\paperwidth]{\hiaacdir/ilustracao.png}};
+      \node[anchor=center, text width=0.62\paperwidth, align=center, text=white]
+            at ($(current page.center)+(0.17\paperwidth,-0.02\paperheight)$) {%
+        \hyphenpenalty=10000\exhyphenpenalty=10000
+        {\Large\bfseries\inserttitle\par}\vspace{0.35em}
+        {\small\insertsubtitle\par}\vspace{0.8em}
+        {\footnotesize\textbf{Aluno:} \insertauthor\par}
+        {\footnotesize\textbf{Orientador:} \hiaacadvisor\par}
+        {\footnotesize\bfseries\insertinstitute\par}};
+    \end{tikzpicture}
+  \end{frame}}
+}
+\newcommand{\hiaacadvisor}{}
+\newcommand{\advisor}[1]{\renewcommand{\hiaacadvisor}{#1}}
+
+% --- slide de seção: ilustração, título azul-marinho, barra laranja, subtítulo cinza
+\newcommand{\hiaacsection}[2]{%
+  \section{#1}
+  {\setbeamertemplate{footline}{%
+     \begin{tikzpicture}[remember picture, overlay]
+       \fill[hiaacbar] (current page.south east) rectangle ++(-0.28\paperwidth, 0.12cm);
+     \end{tikzpicture}}
+  \begin{frame}[plain]
+    \begin{tikzpicture}[remember picture, overlay]
+      \node[anchor=north] (il) at ($(current page.north)+(0,-0.6cm)$)
+            {\includegraphics[height=0.4\paperheight]{\hiaacdir/ilustracao.png}};
+      \node[anchor=north, text=hiaacnavy, font=\LARGE\bfseries] (t) at ($(il.south)+(0,-0.1cm)$) {#1};
+      \fill[hiaacbar] ($(t.south)+(-0.3\paperwidth,-0.05cm)$) rectangle ++(0.6\paperwidth,-0.14cm);
+      \node[anchor=north, text=hiaacgray, font=\small\bfseries] at ($(t.south)+(0,-0.35cm)$) {#2};
+    \end{tikzpicture}
+  \end{frame}}
+}
+
+% --- encerramento: mesma onda da capa
+\newcommand{\hiaacclosing}[1]{%
+  {\setbeamertemplate{footline}{}
+  \begin{frame}[plain]
+    \begin{tikzpicture}[remember picture, overlay]
+      \hiaacwave
+      \hiaacpartners
+      \node[anchor=north] at ($(current page.north)+(0,-0.3cm)$)
+            {\includegraphics[height=1.55cm]{\hiaacdir/logo_hiaac.png}};
+      \node[anchor=center, text width=0.8\paperwidth, align=center, text=white]
+            at ($(current page.center)+(0,-0.03\paperheight)$) {#1};
+    \end{tikzpicture}
+  \end{frame}}
+}

@@ -1,0 +1,9 @@
+torch==2.5.1
+torchvision==0.20.1
+numpy
+scikit-learn
+xgboost
+pyyaml
+pandas
+matplotlib
+tqdm

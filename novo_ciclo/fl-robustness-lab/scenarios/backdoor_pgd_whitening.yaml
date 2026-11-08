@@ -1,0 +1,19 @@
+# Simplificação operacional do cenário "Edge-case PGD": backdoor + constrain-and-scale
+# (norm-bounded) contra o indicador multi-métrica com branqueamento.
+name: backdoor_pgd_whitening
+num_clients: 20
+dirichlet_alpha: 0.5
+num_malicious: 2
+attack: backdoor_pgd
+# PGD com raio final ε = mediana das normas benignas × norm_multiplier (ou max_norm fixo)
+attack_params: {target_label: 0, poison_fraction: 0.5, scale: 3.0, norm_multiplier: 1.0}
+backdoor_target_label: 0
+defense: multi_metric_whitening
+defense_params: {suspect_fraction: 0.2}
+rounds: 40
+local_epochs: 1
+batch_size: 32
+lr: 0.01
+server_holdout_size: 100
+seed: 42
+eval_every: 5

@@ -1,0 +1,19 @@
+<section id="f2final" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:112px 128px 150px;display:flex;flex-direction:column;gap:28px">
+<div style="display:flex;flex-direction:column;gap:10px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A9481A;font-weight:600">Fase 2 · teste pré-registrado, sementes 46–48 (não usadas no desenvolvimento)</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:54px;font-weight:600;line-height:1.12;color:#14213D">LayerGuard v2 + NC-U: critério F1 falhou (4 de 9), F2 cumprido</h2>
+</div>
+<table style="width:1664px;font-size:23px;color:#2A3346">
+<tr><th style="width:34%;text-align:left">ataque · ASR</th><th style="text-align:right">FedAvg</th><th style="text-align:right">LayerGuard v2</th><th style="text-align:right">LG + NC-U</th><th style="text-align:right">FedAvg + NC-U</th></tr>
+<tr style="background:#F6E3D7"><td>LP + ruído ν = 1 · 46 / 47 / 48</td><td style="text-align:right">62 / 72 / 77%</td><td style="text-align:right">54 / 66 / 73%</td><td style="text-align:right;color:#A9481A"><b>57 / 66 / 76%</b></td><td style="text-align:right;color:#A9481A">63 / 76 / 79%</td></tr>
+<tr><td>pixel · 46 / 47 / 48</td><td style="text-align:right">88 / 94 / 93%</td><td style="text-align:right">86 / 93 / 92%</td><td style="text-align:right">1 / 2 / <span style="color:#A9481A"><b>92%</b></span></td><td style="text-align:right;color:#2B5C9E"><b>1 / 2 / 1%</b></td></tr>
+<tr><td>DBA · 46 / 47 / 48</td><td style="text-align:right">86 / 64 / 95%</td><td style="text-align:right">84 / 52 / 93%</td><td style="text-align:right"><span style="color:#A9481A"><b>84%</b></span> / 1 / 0%</td><td style="text-align:right;color:#2B5C9E"><b>2 / 1 / 0%</b></td></tr>
+<tr style="border-top:2px solid #14213D"><td>sem ataque · acurácia</td><td style="text-align:right">64 / 68 / 67%</td><td style="text-align:right">63 / 66 / 66%</td><td style="text-align:right;color:#2B5C9E"><b>63 / 66 / 67%</b></td><td style="text-align:right">65 / 68 / 67%</td></tr>
+</table>
+<div style="display:flex;gap:32px">
+<div style="flex:1;border-left:6px solid #A9481A;padding:4px 0 4px 24px"><p style="font-size:25px;line-height:1.45"><b>LP + ruído em 6 sementes:</b> nenhum método barra de forma robusta — LayerGuard v2 1 de 6, FedSurrogate 2 de 6 (−10 a −20 pp), NC-U 1 de 6. O resultado "v2 barra todo o LP" era artefato da semente 42.</p></div>
+<div style="flex:1;border-left:6px solid #2B5C9E;padding:4px 0 4px 24px"><p style="font-size:25px;line-height:1.45"><b>Achado:</b> com o LayerGuard no treino, o NC deixou de detectar 2 casos que detecta sobre o FedAvg. FedAvg + NC-U resolve pixel e DBA em 6 de 6 (comparação reportada, não critério).</p></div>
+</div>
+<p style="position:absolute;left:128px;bottom:56px;width:1664px;font-size:22px;color:#6B7385">36 · Critérios fixados antes (adendo 5, experiments/fase2_lab.py): F1 = ASR ≤ 10% em todo caso com FedAvg ≥ 40%; F2 = acurácia ≥ FedAvg − 2 pp. results/fase2/FINAL.md</p>
+<aside>Este é o teste final, com sementes que eu não usei para desenvolver nada, e com os critérios fixados antes. A defesa combinada falhou no critério principal: 4 de 9 casos. O LP com ruído passa em todas as três sementes de teste. Pixel e DBA caem em quatro dos seis casos; nos outros dois, o curioso é que o Neural Cleanse funciona sobre o modelo do FedAvg, mas não sobre o do LayerGuard. A acurácia sem ataque fica dentro do limite. Olhando as seis sementes juntas, nenhum método que testamos, nem o nosso nem o FedSurrogate, barra o LP de forma confiável com não-IID severo.</aside>
+</section>

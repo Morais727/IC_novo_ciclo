@@ -1,0 +1,313 @@
+<title>Quadro de defesas por semente</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: coluna única de leitura; primeiro o que vai para o artigo, depois as matrizes ataque × semente e α × semente em contêineres com rolagem própria. */
+:root {
+  --bg: #f6f7f5; --surface: #ffffff; --fg: #1c2321; --muted: #5d6763; --line: #d9dedb;
+  --accent: #2d5f73;
+  --ok-bg: #dcefe1; --ok-fg: #1d5a31;
+  --no-bg: #f6dcd8; --no-fg: #8a2a1e;
+  --near-bg: #f7ebcc; --near-fg: #7a5a0d;
+  --na-bg: #eef0ee; --na-fg: #9aa39f;
+  --f-display: "Source Serif 4", Georgia, serif;
+  --f-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #141917; --surface: #1c2220; --fg: #e4e9e6; --muted: #9ba6a1; --line: #2f3734;
+  --accent: #8cc0d4;
+  --ok-bg: #1f3a28; --ok-fg: #9fdcb0;
+  --no-bg: #43231f; --no-fg: #f2aba0;
+  --near-bg: #3d3318; --near-fg: #ecd18a;
+  --na-bg: #222826; --na-fg: #66706c; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #141917; --surface: #1c2220; --fg: #e4e9e6; --muted: #9ba6a1; --line: #2f3734;
+  --accent: #8cc0d4;
+  --ok-bg: #1f3a28; --ok-fg: #9fdcb0;
+  --no-bg: #43231f; --no-fg: #f2aba0;
+  --near-bg: #3d3318; --near-fg: #ecd18a;
+  --na-bg: #222826; --na-fg: #66706c; color-scheme: dark }
+
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 980px; margin: 0 auto; padding-block: 40px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 40px; }
+h1, h2 { font-family: var(--f-display); text-wrap: balance; margin: 0; line-height: 1.2; }
+h1 { font-size: 2rem; }
+h2 { font-size: 1.35rem; }
+h3 { font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0; font-weight: 600; }
+h4 { font-family: var(--f-display); font-size: 1.05rem; margin: 0; }
+p { margin: 0; max-width: 68ch; }
+.lede { color: var(--muted); }
+section { display: flex; flex-direction: column; gap: 14px; }
+
+.summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+.sum { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.sum .k { font-family: var(--f-mono); font-size: 1.4rem; font-weight: 600; }
+.sum .k.ok { color: var(--ok-fg); } .sum .k.no { color: var(--no-fg); } .sum .k.near { color: var(--near-fg); }
+.sum p { font-size: .9rem; color: var(--muted); }
+
+/* o que vai para o artigo */
+.verdicts { display: flex; flex-direction: column; gap: 12px; }
+.v { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px 18px; display: grid; grid-template-columns: 9.5rem 1fr; gap: 6px 18px; min-width: 0; }
+.v .lvl { font-family: var(--f-mono); font-size: .78rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; padding: 3px 8px; border-radius: 3px; align-self: start; justify-self: start; }
+.lvl.new { background: var(--ok-bg); color: var(--ok-fg); }
+.lvl.rel { background: var(--near-bg); color: var(--near-fg); }
+.lvl.out { background: var(--na-bg); color: var(--muted); }
+.v .body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.v .body p { font-size: .93rem; }
+.v .ev { font-size: .85rem; color: var(--muted); }
+@media (max-width: 560px) { .v { grid-template-columns: 1fr; } }
+
+.thesis { font-family: var(--f-display); font-size: 1.2rem; line-height: 1.45; border-left: 3px solid var(--accent); padding: 4px 0 4px 16px; max-width: 70ch; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: .88rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.chip { display: inline-block; width: 14px; height: 14px; border-radius: 3px; }
+
+.scroll { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: center; vertical-align: middle; }
+thead th { font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; background: var(--surface); }
+thead th.split { color: var(--accent); }
+tbody tr:last-child td, tbody tr:last-child th { border-bottom: 0; }
+th.row { text-align: left; font-weight: 500; min-width: 170px; }
+th.row small { display: block; color: var(--muted); font-weight: 400; font-size: .8rem; }
+td.c { font-family: var(--f-mono); font-size: .85rem; min-width: 64px; }
+td.c small { display: block; font-size: .72rem; opacity: .75; }
+td.ok { background: var(--ok-bg); color: var(--ok-fg); }
+td.no { background: var(--no-bg); color: var(--no-fg); }
+td.near { background: var(--near-bg); color: var(--near-fg); }
+td.na { background: var(--na-bg); color: var(--na-fg); }
+td.plain { font-family: var(--f-mono); font-size: .85rem; }
+td.c b, td.plain b { font-weight: 600; }
+tr.group th { text-align: left; font-family: var(--f-body); font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; color: var(--accent); background: var(--bg); padding-top: 12px; }
+tr.tot th, tr.tot td { font-weight: 600; border-top: 2px solid var(--line); }
+
+.others td, .others th { text-align: left; vertical-align: top; }
+.others td { font-size: .9rem; min-width: 220px; }
+.tag { display: inline-block; font-family: var(--f-mono); font-size: .78rem; padding: 1px 6px; border-radius: 3px; margin: 1px 2px 1px 0; white-space: nowrap; }
+.tag.ok { background: var(--ok-bg); color: var(--ok-fg); }
+.tag.no { background: var(--no-bg); color: var(--no-fg); }
+.tag.near { background: var(--near-bg); color: var(--near-fg); }
+
+.notes { font-size: .88rem; color: var(--muted); display: flex; flex-direction: column; gap: 4px; padding-left: 1.2em; margin: 0; }
+.crit { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 14px 18px; display: flex; flex-direction: column; gap: 8px; font-size: .92rem; }
+.crit ul { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 4px; }
+footer { font-size: .82rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 14px; }
+code { font-family: var(--f-mono); font-size: .85em; }
+</style>
+
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:10px">
+    <h3>Aprendizado federado · ataque LP (Zhuang et al., ICLR 2024) · CIFAR-10, 20 clientes</h3>
+    <h1>O que temos para um artigo sobre o ataque LP</h1>
+    <p class="lede">Todos os resultados até 20/10/2026, incluindo a varredura de α (82 treinos), e uma avaliação do que é novo, do que serve de apoio e do que fica de fora. Os números por semente das nossas defesas estão nas seções 2 a 4.</p>
+  </header>
+
+  <section>
+    <div class="summary">
+      <div class="sum"><span class="k ok">α ≥ 0,3</span><p>faixa em que a nossa proposta bloqueia o LP + ruído em todas as sementes de teste. Sem ruído, vale até α = 0,2.</p></div>
+      <div class="sum"><span class="k no">α = 0,1</span><p>nenhuma defesa testada, nossa ou existente, bloqueia o LP nas sementes de teste.</p></div>
+      <div class="sum"><span class="k ok">10 de 12</span><p>casos de ataques que estragam o modelo (ruído, IPM, LIE) defendidos. Os 2 restantes falharam por menos de meio ponto.</p></div>
+      <div class="sum"><span class="k near">≤ 1,7 pp</span><p>custo de acurácia da nossa proposta sem ataque, contra a média simples (FedAvg), em todas as sementes.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>1. O que faz sentido para o artigo</h2>
+    <p class="thesis">A nossa proposta decide por camada, não por cliente. Ela bloqueia o LP e suas versões adaptativas sem custo de acurácia até um nível de desigualdade dos dados que medimos (α = 0,3 com ruído, 0,2 sem). Abaixo disso, nenhuma defesa testada funciona, e avaliar com uma semente só esconde essa fronteira.</p>
+    <div class="verdicts">
+      <div class="v"><span class="lvl new">Novo · central</span><div class="body">
+        <h4>Defesa por camada contra a família LP</h4>
+        <p>Filtro que compara os clientes camada por camada e descarta só a camada suspeita. Bloqueia o LP original, o evasivo e o com ruído no atacante, com ASR de 2–8% e acurácia igual à do FedAvg.</p>
+        <p class="ev">Evidência: α = 0,5 em 4 de 4 sementes; α = 0,3 em 3 de 3 sementes de teste. O trabalho mais próximo (FedSurrogate, que também olha camadas) não bloqueia o LP + ruído em nenhuma semente sem perder 13–20 pontos de acurácia.</p>
+      </div></div>
+      <div class="v"><span class="lvl new">Novo · central</span><div class="body">
+        <h4>Até onde a defesa funciona: a curva de α</h4>
+        <p>Primeira medição de onde uma defesa contra o LP deixa de funcionar à medida que os dados ficam mais desiguais. A transição fica entre α = 0,3 e 0,2. O ruído do atacante antecipa a falha em um degrau.</p>
+        <p class="ev">Evidência: seção 3, 82 treinos, critérios fixados antes. Isso transforma o resultado "falha com α = 0,1" num limite medido, que é mais útil para quem for usar ou atacar a defesa.</p>
+      </div></div>
+      <div class="v"><span class="lvl new">Novo · forte</span><div class="body">
+        <h4>Defesas por cliente pioram o LP com dados desiguais</h4>
+        <p>Com α = 0,1, Multi-Krum e FLAME aumentam o sucesso do LP original (89% e 93%, contra 72% no FedAvg) e custam 15 e 28 pontos de acurácia sem ataque. No código dos autores, o FLAME bloqueou o LP em 4 de 5 execuções. A Tabela 2 do artigo original (75% contra o FLAME) não se reproduziu.</p>
+        <p class="ev">Contradiz parte do que o artigo do LP afirma. É um achado útil por si só, desde que a reprodução seja descrita com cuidado.</p>
+      </div></div>
+      <div class="v"><span class="lvl new">Novo · método</span><div class="body">
+        <h4>Uma semente só superestima a defesa</h4>
+        <p>Na semente 42, em que a defesa foi desenvolvida, ela funciona em todos os α, inclusive 0,1. Nas sementes de teste, falha a partir de 0,2. Se tivéssemos parado na 42, teríamos publicado um resultado falso.</p>
+        <p class="ev">Protocolo com sementes de desenvolvimento e de teste separadas, mais critérios registrados antes de rodar. Vale como contribuição de metodologia e reforça a credibilidade do resto.</p>
+      </div></div>
+      <div class="v"><span class="lvl rel">Relevante · apoio</span><div class="body">
+        <h4>Por que falha com α baixo</h4>
+        <p>O destaque dos atacantes nas camadas críticas cai junto com α (escore 7,0 em α = 0,5 até 1,3 em α = 0,1): os honestos ficam tão diferentes entre si que os atacantes deixam de se destacar. A hipótese completa (H10) foi refutada porque o número de camadas críticas não aumenta.</p>
+        <p class="ev">Entra na análise, relatando as duas metades. Junto vai a medida por camada: separa os atacantes com AUC 0,94 em α = 0,1, contra 0,41 olhando o modelo inteiro, na semente 42.</p>
+      </div></div>
+      <div class="v"><span class="lvl rel">Relevante · apoio</span><div class="body">
+        <h4>Ataque adaptativo e ataques que estragam o modelo</h4>
+        <p>Ruído só na camada crítica derrubava a versão com similaridade (ASR 70%). Somar a norma por camada resolveu: 2–3% com ruído de 0,5 a 4. Se o atacante mantém a norma para fugir, perde parte do próprio backdoor (70% → 51% sem defesa). A defesa também segura ruído, IPM e LIE: 10 de 12 casos, enquanto o FedAvg cai para 10% sob ruído.</p>
+        <p class="ev">Mostra que a defesa não é frágil a um atacante que a conhece. Os ataques de modelo entram como robustez geral.</p>
+      </div></div>
+      <div class="v"><span class="lvl rel">Relevante · discussão</span><div class="body">
+        <h4>Backdoors comuns pedem outra fonte de informação</h4>
+        <p>Pixel, DBA e PGD não se separam dos honestos por nenhum sinal das atualizações com α = 0,1. Neural Cleanse com desaprendizado no modelo final, usando 100 imagens limpas, zera pixel e DBA (≤ 2%) em 4 sementes, com custo de 0,3–4,7 pontos.</p>
+        <p class="ev">Separa o problema em duas classes. A técnica existe; a nossa contribuição é a combinação e a avaliação, então vai como discussão, não como proposta central.</p>
+      </div></div>
+      <div class="v"><span class="lvl out">Fica de fora</span><div class="body">
+        <h4>Tentativas que não funcionaram</h4>
+        <p>Versão 1 com corte de norma, varredura de gatilho por cliente, reparo estilo I-BAU, ANP, poda com ajuste fino, consistência entre camadas, atualização acumulada, Neural Cleanse por cliente e RAGNAR contra estes ataques.</p>
+        <p class="ev">Cabem numa frase e numa tabela de apêndice. Uma delas vale mencionar no texto: a varredura acha o gatilho exato, mas tarde demais, e excluir o atacante depois não apaga o backdoor (fica em ~11%).</p>
+      </div></div>
+    </div>
+    <div class="crit">
+      <strong>O que falta antes de submeter</strong>
+      <ul>
+        <li>Mais um conjunto de dados e um modelo maior (hoje só CIFAR-10 com uma CNN pequena).</li>
+        <li>Atacante que otimiza diretamente contra o nosso escore, e não só com ruído.</li>
+        <li>Busca de defesas por camada publicadas depois do LP (2024–2026): FLIP, FreqFed, BackdoorIndicator e similares.</li>
+        <li>Mais de 2 atacantes em 20 nos backdoors.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <div class="crit">
+      <strong>Como ler as tabelas</strong>
+      <ul>
+        <li><b>Backdoor</b> (LP, pixel, DBA, PGD): defendeu = sucesso do ataque ≤ 10% sem perder mais de 3 pontos de acurácia. A célula mostra o sucesso do ataque com a defesa.</li>
+        <li><b>Ataques que estragam o modelo</b> (ruído, IPM, LIE): defendeu = acurácia sob ataque até 3 pontos abaixo da acurácia da defesa sem ataque. A célula mostra a acurácia.</li>
+        <li><b>Sementes:</b> 42, 44, 45 = desenvolvimento · 43 = réplica extra · 46, 47, 48 = teste (separadas antes, nunca usadas para ajustar nada).</li>
+        <li><b>α</b>: quanto menor, mais desiguais os dados entre clientes (0,5 = moderado, 0,1 = severo).</li>
+      </ul>
+      <div class="legend">
+        <span><i class="chip" style="background:var(--ok-bg)"></i>defendeu</span>
+        <span><i class="chip" style="background:var(--near-bg)"></i>quase ou inconclusivo (ver nota)</span>
+        <span><i class="chip" style="background:var(--no-bg)"></i>não defendeu</span>
+        <span><i class="chip" style="background:var(--na-bg)"></i>não testado</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Nossa proposta, por ataque e semente</h2>
+    <p class="lede">Filtro por camada: para cada camada do modelo, mede quão parecida e quão grande é a atualização de cada cliente em relação aos demais, e descarta só as camadas suspeitas daquele cliente.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th class="row">ataque</th><th>42</th><th>43</th><th>44</th><th>45</th><th class="split">46</th><th class="split">47</th><th class="split">48</th></tr></thead>
+        <tbody>
+          <tr class="group"><th colspan="8">Dados muito desiguais entre clientes (α = 0,1)</th></tr>
+          <tr><th class="row">LP original</th><td class="c near">2%¹</td><td class="c na">—</td><td class="c na">—</td><td class="c na">—</td><td class="c na">—</td><td class="c na">—</td><td class="c na">—</td></tr>
+          <tr><th class="row">LP evasivo</th><td class="c ok">2%</td><td class="c na">—</td><td class="c na">—</td><td class="c na">—</td><td class="c no">19%</td><td class="c no">57%</td><td class="c no">28%</td></tr>
+          <tr><th class="row">LP evasivo + ruído<small>o caso mais difícil</small></th><td class="c ok">3%</td><td class="c near">3%²</td><td class="c no">55%</td><td class="c no">69%</td><td class="c no">57%</td><td class="c no">66%</td><td class="c no">76%</td></tr>
+          <tr><th class="row">LP com ruído 0,5 / 2 / 4</th><td class="c ok">2–3%</td><td class="c na">—</td><td class="c na">—</td><td class="c na">—</td><td class="c na">—</td><td class="c na">—</td><td class="c na">—</td></tr>
+          <tr><th class="row">Backdoor de pixel</th><td class="c no">97%</td><td class="c na">—</td><td class="c na">—</td><td class="c na">—</td><td class="c no">88%</td><td class="c no">94%</td><td class="c no">92%</td></tr>
+          <tr><th class="row">DBA<small>gatilho distribuído</small></th><td class="c no">44%</td><td class="c na">—</td><td class="c na">—</td><td class="c na">—</td><td class="c no">84%</td><td class="c no">56%</td><td class="c no">92%</td></tr>
+          <tr><th class="row">Backdoor PGD</th><td class="c no">74%</td><td class="c na">—</td><td class="c na">—</td><td class="c na">—</td><td class="c na">—</td><td class="c na">—</td><td class="c na">—</td></tr>
+          <tr><th class="row">Ruído no modelo<small>sem defesa: 10% de acurácia</small></th><td class="c ok">67%</td><td class="c na">—</td><td class="c na">—</td><td class="c na">—</td><td class="c ok">62%</td><td class="c ok">67%</td><td class="c ok">66%</td></tr>
+          <tr><th class="row">IPM</th><td class="c ok">66%</td><td class="c na">—</td><td class="c na">—</td><td class="c na">—</td><td class="c near">60%³</td><td class="c ok">65%</td><td class="c near">63%³</td></tr>
+          <tr><th class="row">LIE</th><td class="c ok">67%</td><td class="c na">—</td><td class="c na">—</td><td class="c na">—</td><td class="c ok">62%</td><td class="c ok">67%</td><td class="c ok">66%</td></tr>
+          <tr class="group"><th colspan="8">Dados menos desiguais (α = 0,5)</th></tr>
+          <tr><th class="row">LP evasivo</th><td class="c ok">2%</td><td class="c na">—</td><td class="c na">—</td><td class="c na">—</td><td class="c ok">2%</td><td class="c ok">2%</td><td class="c ok">3%</td></tr>
+          <tr><th class="row">LP evasivo + ruído</th><td class="c ok">2%</td><td class="c na">—</td><td class="c na">—</td><td class="c na">—</td><td class="c ok">2%</td><td class="c ok">2%</td><td class="c ok">8%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <ol class="notes">
+      <li>Bloqueou o ataque, mas perdeu 3,4 pontos de acurácia (limite: 3).</li>
+      <li>Nessa semente o ataque não funcionou nem sem defesa (3%), então o resultado não prova nada.</li>
+      <li>Abaixo do critério por 0,1 e 0,3 ponto; ainda assim acima da média simples sem defesa (58% e 60%).</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>3. Curva de α: onde a nossa proposta deixa de funcionar</h2>
+    <p class="lede">Mesma defesa, sem mudar nenhum parâmetro, com α de 0,5 a 0,1. Cada célula mostra o sucesso do ataque com a nossa proposta e, embaixo, sem defesa. A acurácia com a nossa proposta ficou entre 63% e 73% em todos os casos.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th class="row">semente</th><th>α 0,5</th><th>α 0,4</th><th>α 0,3</th><th>α 0,2</th><th>α 0,1</th></tr></thead>
+        <tbody>
+          <tr class="group"><th colspan="6">LP evasivo + ruído no atacante</th></tr>
+          <tr><th class="row">42<small>desenvolvimento</small></th><td class="c ok">1,9%<small>35</small></td><td class="c ok">2,4%<small>29</small></td><td class="c ok">3,1%<small>57</small></td><td class="c ok">5,4%<small>32</small></td><td class="c ok">3,2%<small>76</small></td></tr>
+          <tr><th class="row">46</th><td class="c ok">2,1%<small>51</small></td><td class="c ok">2,3%<small>48</small></td><td class="c ok">2,2%<small>45</small></td><td class="c no">18,3%<small>77</small></td><td class="c no">56,9%<small>65</small></td></tr>
+          <tr><th class="row">47</th><td class="c ok">1,9%<small>68</small></td><td class="c ok">1,7%<small>50</small></td><td class="c ok">5,6%<small>67</small></td><td class="c no">19,2%<small>52</small></td><td class="c no">65,9%<small>70</small></td></tr>
+          <tr><th class="row">48</th><td class="c ok">7,7%<small>47</small></td><td class="c near">4,9%<small>8 ⁴</small></td><td class="c ok">3,5%<small>24</small></td><td class="c ok">8,2%<small>42</small></td><td class="c no">75,9%<small>85</small></td></tr>
+          <tr class="tot"><th class="row">sementes de teste defendidas</th><td class="plain">3 de 3</td><td class="plain">2 de 2</td><td class="plain">3 de 3</td><td class="plain">1 de 3</td><td class="plain">0 de 3</td></tr>
+          <tr class="group"><th colspan="6">LP evasivo sem ruído</th></tr>
+          <tr><th class="row">42<small>desenvolvimento</small></th><td class="c ok">1,5%<small>34</small></td><td class="c ok">1,6%<small>32</small></td><td class="c ok">2,3%<small>52</small></td><td class="c ok">2,1%<small>33</small></td><td class="c ok">2,4%<small>74</small></td></tr>
+          <tr><th class="row">46</th><td class="c ok">1,6%<small>50</small></td><td class="c ok">1,9%<small>45</small></td><td class="c ok">1,9%<small>48</small></td><td class="c ok">2,3%<small>71</small></td><td class="c no">18,7%<small>62</small></td></tr>
+          <tr><th class="row">47</th><td class="c ok">1,5%<small>72</small></td><td class="c ok">1,5%<small>46</small></td><td class="c ok">1,8%<small>64</small></td><td class="c ok">4,4%<small>49</small></td><td class="c no">57,4%<small>74</small></td></tr>
+          <tr><th class="row">48</th><td class="c ok">2,8%<small>55</small></td><td class="c near">2,1%<small>6 ⁴</small></td><td class="c ok">2,3%<small>23</small></td><td class="c ok">3,9%<small>51</small></td><td class="c no">28,0%<small>77</small></td></tr>
+          <tr class="tot"><th class="row">sementes de teste defendidas</th><td class="plain">3 de 3</td><td class="plain">2 de 2</td><td class="plain">3 de 3</td><td class="plain">3 de 3</td><td class="plain">0 de 3</td></tr>
+          <tr class="group"><th colspan="6">Diagnóstico: destaque dos atacantes nas camadas críticas (média das sementes de teste)</th></tr>
+          <tr><th class="row">escore dos atacantes<small>quanto maior, mais fácil de achar</small></th><td class="plain">7,0</td><td class="plain">4,8</td><td class="plain">5,1</td><td class="plain">3,0</td><td class="plain">1,3</td></tr>
+          <tr><th class="row">camadas críticas por rodada</th><td class="plain">2,3</td><td class="plain">2,8</td><td class="plain">2,6</td><td class="plain">2,3</td><td class="plain">2,8</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <ol class="notes" start="4">
+      <li>O ataque não funcionou nem sem defesa (6–8%), então essa semente não conta no total.</li>
+    </ol>
+    <p class="lede">Hipóteses fixadas antes: a proteção piora quando α diminui (H9) se confirma contando só os casos válidos; o relatório automático marca "refutada" porque conta os inconclusivos de α = 0,4 como falha. A explicação completa (H10) é refutada: o escore cai, mas o número de camadas críticas não aumenta.</p>
+  </section>
+
+  <section>
+    <h2>4. Defesas existentes, para comparação</h2>
+    <p class="lede">Não são propostas nossas; entram no artigo como linhas de base. LP evasivo + ruído com α = 0,1. Cada célula mostra o sucesso do ataque e, entre parênteses, a acurácia.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th class="row">semente</th><th>FedAvg</th><th>Multi-Krum</th><th>FLAME</th><th>FedSurrogate</th><th>nossa proposta</th></tr></thead>
+        <tbody>
+          <tr><th class="row">42</th><td class="plain">73% (68)</td><td class="c no">19% (55)</td><td class="c no">44% (42)</td><td class="c no">16% (55)</td><td class="c ok">3% (68)</td></tr>
+          <tr><th class="row">44</th><td class="plain">59% (63)</td><td class="c no">72% (50)</td><td class="c no">59% (41)</td><td class="c no">71% (51)</td><td class="c no">55% (63)</td></tr>
+          <tr><th class="row">45</th><td class="plain">72% (66)</td><td class="c near">8% (49)⁵</td><td class="c near">0% (36)⁵</td><td class="c near">9% (46)⁵</td><td class="c no">69% (66)</td></tr>
+          <tr><th class="row">46</th><td class="plain">62% (64)</td><td class="c na">—</td><td class="c na">—</td><td class="c no">69% (51)</td><td class="c no">54% (63)</td></tr>
+          <tr><th class="row">47</th><td class="plain">72% (67)</td><td class="c na">—</td><td class="c na">—</td><td class="c no">54% (53)</td><td class="c no">66% (67)</td></tr>
+          <tr><th class="row">48</th><td class="plain">77% (67)</td><td class="c na">—</td><td class="c na">—</td><td class="c no">84% (55)</td><td class="c no">73% (66)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <ol class="notes" start="5">
+      <li>Bloqueia o ataque, mas perde 17 a 30 pontos de acurácia, o que reprova pelo critério.</li>
+    </ol>
+    <p class="lede">Sem ataque, na semente 42: FedAvg 68,7%, nossa proposta 68,8%, Multi-Krum 53,2%, FLAME 40,8%.</p>
+  </section>
+
+  <section>
+    <h2>5. Outras propostas nossas</h2>
+    <div class="scroll others">
+      <table>
+        <thead><tr><th class="row">proposta</th><th>defendeu (semente)</th><th>não defendeu (semente)</th></tr></thead>
+        <tbody>
+          <tr><th class="row">Versão 1 da nossa proposta<small>com corte de norma</small></th>
+            <td><span class="tag ok">LP original 42</span><span class="tag ok">LP evasivo 42</span><span class="tag ok">LP ruído 0,5 42</span><span class="tag ok">LP evasivo α 0,5 42</span></td>
+            <td><span class="tag no">LP ruído 1 / 2 / 4 42</span><span class="tag no">pixel 42</span><span class="tag no">DBA 42</span><span class="tag no">PGD 42</span></td></tr>
+          <tr><th class="row">Neural Cleanse com desaprendizado<small>aplicado ao modelo final</small></th>
+            <td><span class="tag ok">pixel 42 · 46 · 47 · 48</span><span class="tag ok">DBA 42 · 46 · 47 · 48</span><span class="tag ok">LP + ruído 45</span></td>
+            <td><span class="tag no">LP 42 · 44 · 46 · 47 · 48</span><span class="tag no">PGD 42</span></td></tr>
+          <tr><th class="row">Nossa proposta + Neural Cleanse com desaprendizado</th>
+            <td><span class="tag ok">pixel 46 · 47</span><span class="tag ok">DBA 47 · 48</span></td>
+            <td><span class="tag no">LP 46 · 47 · 48</span><span class="tag no">pixel 48</span><span class="tag no">DBA 46</span></td></tr>
+          <tr><th class="row">Varredura de gatilho por cliente<small>exclui o cliente e desaprende o gatilho</small></th>
+            <td>nada</td>
+            <td><span class="tag no">LP + ruído 42</span><span class="tag near">LP + ruído 44 (10,7%)</span><span class="tag no">LP + ruído 45</span></td></tr>
+          <tr><th class="row">Reparo por perturbação universal<small>estilo I-BAU, simplificado</small></th>
+            <td><span class="tag ok">DBA 42</span></td>
+            <td><span class="tag no">LP 42 · 44 · 45</span><span class="tag no">pixel 42</span><span class="tag no">PGD 42</span></td></tr>
+          <tr><th class="row">Poda + ajuste fino do modelo</th>
+            <td>nada</td>
+            <td><span class="tag no">LP 42 · 44 · 45</span><span class="tag no">pixel 42</span><span class="tag no">DBA 42</span></td></tr>
+          <tr><th class="row">Poda de neurônios suspeitos<small>ANP adaptado</small></th>
+            <td>nada</td>
+            <td><span class="tag no">LP 42 · 44 · 45</span><span class="tag no">pixel 42</span><span class="tag no">DBA 42</span><span class="tag no">PGD 42</span></td></tr>
+          <tr><th class="row">RAGNAR<small>α = 0,5, só semente 42</small></th>
+            <td>nada</td>
+            <td><span class="tag no">pixel</span><span class="tag no">PGD</span><span class="tag no">ruído</span><span class="tag no">IPM</span><span class="tag no">LIE</span><span class="tag no">label flip</span><span class="tag no">min-max / min-sum</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>Fonte: treinos em <code>fl-robustness-lab/results/</code> (pastas layer_guard, layer_guard_sn, final_lab, fase2, fase3, fase3c, fase4). Critérios fixados antes de rodar, nas docstrings de <code>experiments/</code>. Acurácia e sucesso do ataque medidos no round 40. Situação em 20/10/2026.</footer>
+</div>

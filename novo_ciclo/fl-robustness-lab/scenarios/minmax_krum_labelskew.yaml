@@ -1,0 +1,18 @@
+# Reproduz o cenário-alvo do artigo BOBA (Bao et al., 2024): label skewness severo
+# (alpha=0.1) + ataque bizantino "otimizado" MinMax, expondo a falha do Krum
+# em descartar clientes benignos heterogêneos como se fossem Byzantinos.
+name: minmax_krum_labelskew
+num_clients: 20
+dirichlet_alpha: 0.1
+num_malicious: 4
+attack: minmax
+attack_params: {perturbation: std}
+defense: krum
+defense_params: {num_malicious_assumed: 4}
+rounds: 50
+local_epochs: 1
+batch_size: 32
+lr: 0.01
+server_holdout_size: 100
+seed: 42
+eval_every: 5

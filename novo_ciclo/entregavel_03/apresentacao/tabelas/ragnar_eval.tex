@@ -1,0 +1,16 @@
+\begin{tabular}{lrrrrrr}
+\toprule
+Ataque & MA FedAvg & MA RAGNAR$_{nv}$ & BA FedAvg & BA RAGNAR$_{nv}$ & Recall$_{nv}$ & FP$_{nv}$ \\
+\midrule
+Ruído gaussiano & 10.0 & 10.0 & -- & -- & 0.00 & 0.00 \\
+IPM & 68.1 & 68.3 & -- & -- & 0.00 & 0.08 \\
+LIE & 70.6 & 70.0 & -- & -- & 0.00 & 0.05 \\
+MinMax & 68.9 & 63.6 & -- & -- & 0.00 & 0.16 \\
+MinSum & 68.9 & 63.9 & -- & -- & 0.00 & 0.16 \\
+Label flip & 72.3 & 72.3 & -- & -- & 0.00 & 0.00 \\
+Backdoor (pixel) & 72.5 & 57.2 & 75.4 & 93.8 & 0.38 & 0.51 \\
+Backdoor (PGD) & 72.9 & 58.4 & 66.3 & 80.5 & 0.56 & 0.48 \\
+\midrule
+\multicolumn{7}{l}{\footnotesize Sem ataque (FedAvg): MA = 72.8\%} \\
+\bottomrule
+\end{tabular}

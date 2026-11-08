@@ -1,0 +1,17 @@
+# Mesmo cenário acima (label skewness severo + MinMax), mas com BOBA como defesa,
+# para comparar diretamente contra o baseline Krum (minmax_krum_labelskew.yaml).
+name: minmax_boba_labelskew
+num_clients: 20
+dirichlet_alpha: 0.1
+num_malicious: 4
+attack: minmax
+attack_params: {perturbation: std}
+defense: boba
+defense_params: {trim_ratio: 0.2, tau: 0.15}
+rounds: 50
+local_epochs: 1
+batch_size: 32
+lr: 0.01
+server_holdout_size: 100
+seed: 42
+eval_every: 5

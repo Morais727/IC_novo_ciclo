@@ -1,0 +1,26 @@
+<section id="res4" data-transition="fade" style="background:#14213D;color:#C9D2E3;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#F0A070;font-weight:600">Resultados de 12–14/10 · o que muda</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#F7F5F0">O não-IID severo virou o problema central</h2>
+</div>
+<div style="display:flex;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;background:#1E2E52;border-radius:12px;padding:36px">
+<h3 style="font-size:32px;font-weight:600;color:#F7F5F0">α = 0,1 decide</h3>
+<p style="font-size:26px;line-height:1.45">O ataque chega a 77% e o nosso melhor sinal fica em 0,59. É o caso que o artigo precisa resolver.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;background:#1E2E52;border-radius:12px;padding:36px">
+<h3 style="font-size:32px;font-weight:600;color:#F7F5F0">Heterogeneidade sem os atacantes</h3>
+<p style="font-size:26px;line-height:1.45">Estimar o subespaço honesto por PCs robustas ou pelo holdout, como no BOBA.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;background:#1E2E52;border-radius:12px;padding:36px">
+<h3 style="font-size:32px;font-weight:600;color:#F7F5F0">Limiar calibrado</h3>
+<p style="font-size:26px;line-height:1.45">AUC 0,94 com recall 0,20–0,53 em z &gt; 3: calibrar por predição conforme e combinar com os sinais do M3.</p>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;border-left:6px solid #E07A45;padding:8px 0 8px 32px">
+<p style="font-size:30px;line-height:1.45;color:#F7F5F0"><b>Próximos passos:</b> repetir o FLAME com o atacante do artigo; similaridade na camada crítica; busca otimizada do gatilho; resposta por camada em ciclo fechado.</p>
+<p style="font-size:26px;line-height:1.45">Multi-Krum e FLAME amplificando o LP reforçam a resposta cirúrgica: excluir clientes inteiros ajuda o atacante.</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#9AA6BF">24 · Análise completa em fl-robustness-lab/results/layer_profile/ANALISE.md. Uma semente só: diferenças pequenas podem ser ruído</p>
+<aside>A tese da concentração vale com não-IID moderado e fica como um componente. Ela não basta sozinha. O caso decisivo é α = 0,1, em que o LP completo é mais forte e as distâncias e a concentração ficam perto do acaso. A sonda sem gatilho foi testada em seguida (slide 23): com manchas sorteadas ela falha, mas o oráculo com o gatilho real mostra que o efeito está lá, e a busca do gatilho por otimização entra como terceiro passo. Antes vêm a checagem do FLAME com o atacante do artigo e a similaridade entre clientes na camada crítica, que é barata e ataca direto o caso α = 0,1. Os outros dois ajustes vêm direto dos dados: a heterogeneidade precisa ser estimada de forma que os atacantes não controlem, e o limiar fixo precisa de calibração.</aside>
+</section>

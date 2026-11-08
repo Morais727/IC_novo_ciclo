@@ -1,0 +1,42 @@
+<section id="protocolo" data-transition="fade" style="background:#F7F5F0;color:#3D4657;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A9481A;font-weight:600">Para ser publicável</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:60px;font-weight:600;line-height:1.12;color:#14213D">O protocolo que um revisor vai exigir</h2>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:28px 64px">
+<div style="display:flex;gap:20px;align-items:start">
+<x-icon name="CheckCircle" style="color:#2B5C9E;width:40px;height:40px"></x-icon>
+<p style="font-size:27px;line-height:1.45"><b>Agregação real:</b> o filtro age sobre o treino desde o round 1, sem oráculo.</p>
+</div>
+<div style="display:flex;gap:20px;align-items:start">
+<x-icon name="CheckCircle" style="color:#2B5C9E;width:40px;height:40px"></x-icon>
+<p style="font-size:27px;line-height:1.45"><b>O LP real:</b> λ, modelo médio e controle adaptativo, conferidos com o código dos autores.</p>
+</div>
+<div style="display:flex;gap:20px;align-items:start">
+<x-icon name="CheckCircle" style="color:#2B5C9E;width:40px;height:40px"></x-icon>
+<p style="font-size:27px;line-height:1.45"><b>No terreno dos autores:</b> o repositório do LP já traz FLAME, Multi-Krum, FLTrust, FLDetector, RLR e FLARE.</p>
+</div>
+<div style="display:flex;gap:20px;align-items:start">
+<x-icon name="CheckCircle" style="color:#2B5C9E;width:40px;height:40px"></x-icon>
+<p style="font-size:27px;line-height:1.45"><b>Modelos que cabem na MX450:</b> CNN em Fashion-MNIST e ResNet20 em CIFAR-10.</p>
+</div>
+<div style="display:flex;gap:20px;align-items:start">
+<x-icon name="CheckCircle" style="color:#2B5C9E;width:40px;height:40px"></x-icon>
+<p style="font-size:27px;line-height:1.45"><b>Não-IID moderado e severo:</b> α = 0,5 e α = 0,1.</p>
+</div>
+<div style="display:flex;gap:20px;align-items:start">
+<x-icon name="CheckCircle" style="color:#2B5C9E;width:40px;height:40px"></x-icon>
+<p style="font-size:27px;line-height:1.45"><b>Métricas:</b> sucesso do backdoor, acurácia, aceitação de maliciosos e de honestos, custo por round.</p>
+</div>
+<div style="display:flex;gap:20px;align-items:start">
+<x-icon name="CheckCircle" style="color:#2B5C9E;width:40px;height:40px"></x-icon>
+<p style="font-size:27px;line-height:1.45"><b>Atacante adaptativo</b> que conhece a defesa e otimiza contra ela.</p>
+</div>
+<div style="display:flex;gap:20px;align-items:start">
+<x-icon name="Warning" style="color:#A9481A;width:40px;height:40px"></x-icon>
+<p style="font-size:27px;line-height:1.45"><b>Pelo menos 3 sementes</b> nos resultados finais. Hoje usamos só a 42: decisão a tomar.</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7385">17 · Repositório do LP: main_fed.py, opção --defence (avg, krum, multikrum, RLR, fltrust, flame, flare, fld, layer_krum)</p>
+<aside>Avaliar no próprio código do artigo do LP é o argumento mais forte para um revisor: comparamos contra o ataque exatamente como os autores o publicaram, e contra as mesmas seis defesas da tabela deles. A semente única foi uma escolha para os experimentos exploratórios; para o artigo, um revisor vai pedir variância. A proposta é manter uma semente na triagem e usar três só na matriz final.</aside>
+</section>

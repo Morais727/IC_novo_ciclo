@@ -391,6 +391,109 @@ def _evade(params, benign, poisoned, layers, groups, lam, benign_deltas, model_c
     return best[4]
 
 
+EVADE_CORR_NU = (0.0, 0.5, 1.0, 2.0)
+
+
+def _evade_corr(out, cleans, senslist, benign_deltas, groups, model_ctor, params):
+    """Atacante adaptativo CIENTE DA CORROBORAÇÃO (item 468; desenho fixado antes de rodar).
+
+    Onisciente, como os demais ataques do laboratório: conhece a regra da layer_guard_corr (flag por tensor
+    se z_sim+z_norm > z_thr; cliente CONFIRMADO/purgado se contagem >= T), o valor de T e os deltas honestos do
+    round. Reduz a 'assinatura' do backdoor para ficar ABAIXO de T por dois meios, combinados:
+      (A) CONCENTRA o veneno em m tensores — os de maior energia de backdoor entre os sensíveis — e nos demais
+          sensíveis REVERTE ao delta limpo do próprio atacante (fica indistinguível de um benigno naquele tensor,
+          logo não conta para a corroboração);
+      (B) DESSINCRONIZA: ruído gaussiano independente por atacante (nu x ||comp||) nos tensores mantidos, baixando
+          o cosseno mútuo entre atacantes — o z_sim só dispara quando >= 2 maliciosos ficam parecidos.
+    Varre a grade (m, nu), simula a layer_guard_corr sobre [atacantes || honestos] e escolhe:
+      - entre as configs que EVADEM (count < T em TODOS os atacantes): a de maior m (backdoor mais forte), empate
+        por menor nu (menos ruído = direção mais limpa);
+      - se nenhuma evade: a de MENOR soma de contagens (mais perto de evadir).
+    Registra a escolha por round em params['_evade_corr_log'] — é a evidência de SE/QUANDO a corr cede
+    (m necessário para evadir vs. m necessário para o backdoor pegar)."""
+    from src.defenses.registry import DEFENSE_REGISTRY
+    fn = DEFENSE_REGISTRY["layer_guard_corr"]
+    z_thr = params.get("evade_z_thr", 3.0)
+    T = params.get("evade_T", params.get("confirm_tensors", 8))
+    ctx = {"state": {"tensor_groups": groups}, "model_ctor": model_ctor}
+    n_mal = len(out)
+    comps = [{g: (out[a][groups[g]] - cleans[a][groups[g]]) for g in senslist[a]} for a in range(n_mal)]
+    xis = [{g: torch.randn_like(v) for g, v in c.items()} for c in comps]
+    all_g = sorted({g for c in comps for g in c})
+    energy = {g: float(np.mean([comps[a][g].norm().item() for a in range(n_mal) if g in comps[a]])) for g in all_g}
+    order = sorted(all_g, key=lambda g: -energy[g])
+    grid = params.get("evade_m_grid") or [len(all_g), 16, 12, T + 2, T, T - 1, max(T - 3, 1), 4, 2]
+    grid = sorted({m for m in grid if 1 <= m <= len(all_g)}, reverse=True)
+    nus = params.get("evade_nu_grid", EVADE_CORR_NU)
+    # 15/11/2026 — atacante CIENTE DA AGREGAÇÃO (resposta ao adaptativo, fase16; desenho fixado antes de rodar):
+    # com evade_score_defense = <defesa>, o atacante também simula a AGREGAÇÃO dessa defesa e, entre as configs que
+    # evadem a contagem, escolhe a que mais empurra o agregado na direção do backdoor:
+    #   score = <agg(defesa)(maliciosos || honestos) − agg(defesa)(limpos || honestos), b> / ||b||,
+    #   b = média dos componentes de backdoor pretendidos (todos os tensores sensíveis, sem ruído/escala).
+    # Ganha também uma escala gamma (padrão {1; 0,5}): contra média aparada, encolher o veneno para dentro da faixa
+    # dos honestos pode render mais (estilo "a little is enough"). Sem evade_score_defense, nada muda (Fase 8G).
+    score_def = params.get("evade_score_defense")
+    gammas = params.get("evade_gamma_grid", (1.0, 0.5)) if score_def else (1.0,)
+    if score_def:
+        grid = params.get("evade_score_m_grid") and sorted(params["evade_score_m_grid"], reverse=True) or \
+            sorted({m for m in [len(all_g), 16, 12, T + 2, T, T - 2, 4] if 1 <= m <= len(all_g)}, reverse=True)
+        nus = params.get("evade_score_nu_grid", (0.0, 0.5, 1.0))
+        sfn = DEFENSE_REGISTRY[score_def]
+        dev = params.get("_evade_dev") or ("cuda" if torch.cuda.is_available() else "cpu")   # 15/11: CPU se faltar memória
+        ben = benign_deltas.to(dev)
+        bvec = torch.zeros_like(cleans[0])
+        for a in range(n_mal):
+            for g, v in comps[a].items():
+                bvec[groups[g]] += v / n_mal
+        bvec = bvec.to(dev); bn = bvec.norm().clamp_min(1e-12)
+        sctx = {"state": {"tensor_groups": groups}, "model_ctor": model_ctor}
+        sp = {"z_thr": z_thr, "confirm_tensors": T}
+        base = torch.cat([torch.stack(cleans).to(dev), ben])
+        agg0, _ = sfn(base, torch.ones(len(base)), sctx, sp)
+
+    def build(keep, nu, gamma=1.0):
+        ds = []
+        for a in range(n_mal):
+            d = cleans[a].clone()
+            for g in senslist[a]:
+                if g in keep:
+                    v = comps[a][g] + nu * comps[a][g].norm() * xis[a][g] / (xis[a][g].norm() + 1e-12)
+                    d[groups[g]] = cleans[a][groups[g]] + gamma * v
+            ds.append(d)
+        return ds
+
+    evaders, fallback = [], None
+    for m in grid:
+        keep = set(order[:m])
+        for nu in nus:
+            for gamma in gammas:
+                ds = build(keep, nu, gamma)
+                stack = torch.cat([torch.stack(ds), benign_deltas.to(ds[0].device)])
+                _, info = fn(stack, torch.ones(len(stack)), ctx, {"z_thr": z_thr, "confirm_tensors": T})
+                cnt = np.array(info["confirm_count"][:n_mal])
+                sc = None
+                if (cnt < T).all():
+                    if score_def:
+                        aggc, _ = sfn(stack.to(dev), torch.ones(len(stack)), sctx, sp)
+                        sc = float((aggc - agg0) @ bvec / bn)
+                    evaders.append((m, nu, gamma, ds, cnt, sc))
+                s = float(cnt.sum())
+                if fallback is None or s < fallback[0]:
+                    fallback = (s, (m, nu, gamma, ds, cnt, sc))
+    if evaders:                           # sem score: maior m, depois menor nu; com score: maior empurrão no backdoor
+        key = (lambda r: r[5]) if score_def else (lambda r: (r[0], -r[1]))
+        m, nu, gamma, ds, cnt, sc = max(evaders, key=key)
+        evades = True
+    else:                                 # ninguém evade: o mais perto de evadir
+        m, nu, gamma, ds, cnt, sc = fallback[1]
+        evades = False
+    params.setdefault("_evade_corr_log", []).append(
+        {"round": params.get("_round"), "m_kept": int(m), "n_sens": len(all_g), "nu": float(nu),
+         "gamma": float(gamma), "score": sc, "T": int(T), "confirm_count_mal": [int(x) for x in cnt],
+         "evades": evades})
+    return ds
+
+
 # ----------------------------------------------------------------------------- ataques de 2026 (Fase 8A)
 def _train_ext(model_ctor, start, global_vector, dataset, device, hp: dict, epochs=None, trainable=None,
                anchor_beta=0.0, epoch_cb=None):
@@ -518,7 +621,7 @@ def laysel_attack(train, model_ctor, global_vector, attacker_data: list, benign_
         from src.attacks.a3fl import refine_a3fl_trigger
         refine_a3fl_trigger(model_ctor, global_vector, attacker_data, device, params, target)
 
-    out, log = [], []
+    out, log, cleans, senslist = [], [], [], []
     for a, data in enumerate(attacker_data):
         pois = BackdoorDataset(data, target, frac, params.get("seed", 0) + 1000 * a + r)
         traj = {"c": [torch.zeros_like(global_vector)], "b": [torch.zeros_like(global_vector)]}
@@ -539,7 +642,15 @@ def laysel_attack(train, model_ctor, global_vector, attacker_data: list, benign_
             if g not in sens:
                 d[groups[g]] = d[groups[g]].clamp(-clip, clip)
         out.append(d)
+        cleans.append(clean)
+        senslist.append(sens)
         log.append({"sensitive": sens, "trained": sel})
+    if params.get("evade_corr"):          # atacante adaptativo CIENTE DA CORROBORAÇÃO (item 468)
+        try:
+            out = _evade_corr(out, cleans, senslist, benign_deltas, groups, model_ctor, params)
+        except torch.OutOfMemoryError:   # 15/11: GPU cheia (a16 clip s43 caiu assim na GPU 5) -> refaz a varredura na CPU
+            torch.cuda.empty_cache()
+            out = _evade_corr(out, cleans, senslist, benign_deltas, groups, model_ctor, {**params, "_evade_dev": "cpu"})
     params["_bc_layers"] = log[0]["trained"]
     params.setdefault("_lp_log", []).append({"round": r, "attackers": [{"n_sens": len(x["sensitive"]),
                                              "normal": [g for g in names if g not in x["sensitive"]],

@@ -1,0 +1,20 @@
+\begin{abstract}
+Ataques de backdoor com seleção de camadas escondem o envenenamento em alguns poucos
+tensores de parâmetros, de modo que agregadores robustos que atuam tensor a tensor não
+conseguem isolá-lo. Reproduzimos fielmente o ataque mais recente dessa classe,
+o LaySelFL (CVPR 2026), em seu próprio cenário (ResNet18-GN, CIFAR-10, 20 clientes, 6
+maliciosos, Dirichlet $\alpha{=}0{,}9$, 205 rodadas) e mostramos que ele atinge uma taxa de
+sucesso do backdoor (ASR) de $82\%$ sem defesa, enquanto \emph{toda a classe} de defesas
+publicadas falha em contê-lo (Multi-Krum, AlignIns, FedSurrogate, FLAME, RFLDefense $70$--$88\%$;
+a melhor, LASA, $21{,}7\%$). Diagnosticamos a falha --- o envenenamento vaza pelos tensores
+convolucionais, onde cada tensor isolado permanece abaixo de qualquer limiar por tensor --- e
+propomos uma defesa que \emph{corrobora evidências entre camadas}: um sinal por tensor ($z$
+robusto do cosseno par a par de atualizações centradas na mediana, somado à norma da atualização)
+é agregado contando quantos tensores acusam cada cliente, e um cliente confirmado por pelo menos
+$T$ tensores é removido. Em quatro sementes, a família por corroboração contém o ataque (expurgo
+do cliente $4{,}3\pm1{,}3\%$, substituição por consenso $5{,}5\pm2{,}0\%$, corte por tensor
+$10{,}5\pm6{,}3\%$), generaliza para VGG19 e EfficientNet e para o gatilho adaptativo A3FL no
+CIFAR-10 ($12{,}6\%$), e custa $\leq 6{,}5\%$ de tempo extra por rodada, sem dados limpos no
+servidor. Caracterizamos o modelo de ameaça sob o qual a defesa se sustenta ($\geq 2$ atacantes
+em conluio) e um adversário adaptativo que conhece a defesa.
+\end{abstract}

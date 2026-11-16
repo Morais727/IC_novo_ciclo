@@ -1,0 +1,9 @@
+\section{Limitações}\label{sec:limits}
+(i) O sinal precisa de $\geq 2$ atacantes em conluio; um atacante solitário é indistinguível pela
+similaridade mútua. Validamos esse limite no repositório original do LP \cite{lp}: com 20\% de
+maliciosos (2 por rodada) nossa proposta zera o backdoor ($0{,}1$--$0{,}3\%$), mas com 10\% (1 por
+rodada) não defende ($\approx 72\%$). \todo{inserir a Fig.\ da Fase 9A: contagem de corroboração de
+1 atacante $\approx$ benigno vs.\ 2 atacantes $\gg$ benigno (instrumentada; entra com GPU livre).}
+(ii) O A3FL no FMNIST ainda não é contido ($68\%$, Fig.~\ref{fig:geral}); variantes de expurgo
+agressivo estão em avaliação. (iii) O limiar de contagem $T$ precisa ser reduzido em arquiteturas com
+corroboração mais fraca; a calibração automática (p.ex.\ via predição conformal) é trabalho futuro.

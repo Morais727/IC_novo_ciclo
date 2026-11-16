@@ -1,0 +1,25 @@
+======================================
+    IID: 0
+    Dataset: fashion_mnist
+    Model: rlr_mnist
+    Model Init: None
+    Aggregation Function: flame
+    Attack method: adaptive
+    Attack mode: 1
+    Attack tau: 0.8
+    Fraction of malicious agents: 20.0%
+    Poison Frac: 0.5
+    Backdoor From -1 to 5
+    Attack Begin: 0
+    Trigger Shape: square
+    Trigger Position X: 23
+    Trigger Position Y: 23
+    Number of agents: 100
+    Fraction of agents each turn: 10(10.0%)
+    Local batch size: 64
+    Local epoch: 2
+    Client_LR: 0.01
+    Client_Momentum: 0.9
+    Global Rounds: 40
+    Noise in FLAME: 0.001
+======================================

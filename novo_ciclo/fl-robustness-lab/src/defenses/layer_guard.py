@@ -235,3 +235,73 @@ def lg_shadow(deltas, weights, ctx, params):
     ctx["state"].setdefault("diag_log", []).append(rec)
     w = weights.to(deltas.device).float()
     return (deltas * (w / w.sum()).unsqueeze(1)).sum(dim=0), {"excluded_indices": []}
+
+
+# ----------------------------------------------------------------------------------------------------------------
+# RESPOSTA AO ADVERSÁRIO ADAPTATIVO (15/11/2026; desenho FIXADO ANTES DE RODAR — pedido do usuário, prioridade 1).
+# Diagnóstico (Fase 8G, 4 sementes): o atacante ciente da corroboração mantém a contagem < T em todo round
+# (concentra o veneno em m tensores e dessincroniza com ruído). Testes offline com o diag_log dos portões s42–s45:
+# memória temporal (EWMA, e média acumulada por cliente) NÃO separa — 2 benignos não-IID ficam sempre com contagem
+# 7–8, acima da média dos atacantes (4–10). Conclusão: a DETECÇÃO por contagem não basta; a resposta vem da
+# AGREGAÇÃO: o que o atacante consegue fazer passar abaixo de T precisa ter influência limitada.
+# Duas variantes sobre a corr-soft (a recomendada), mesma detecção (z_thr = 3, T = 8):
+#   *_tm   : após a substituição por consenso, média APARADA por coordenada em cada tensor (corta beta=0,2 de cada
+#            lado: 4 de 20). Um atacante que passa abaixo de T só move o agregado dentro da faixa dos honestos.
+#   *_clip : após a substituição, corta a NORMA de cada contribuição, por tensor, na mediana das normas dos aceitos
+#            naquele tensor (o corte por tensor do LayerGuard, 16/10), depois média ponderada.
+# Avaliação (fase16): contra o adaptativo CIENTE DA AGREGAÇÃO (o atacante simula a variante e escolhe a config que
+# mais empurra o agregado na direção do backdoor), contra o LaySelFL padrão e sem ataque (custo de acurácia).
+def _corr_detect(deltas, ctx, params):
+    groups = ctx["state"].get("tensor_groups")
+    if groups is None:
+        from src.attacks.recent import tensor_groups
+        groups = ctx["state"]["tensor_groups"] = tensor_groups(ctx["model_ctor"]())
+    n, z_thr = deltas.shape[0], params.get("z_thr", 3.0)
+    T = params.get("confirm_tensors", 8)
+    centered = deltas - deltas.median(dim=0).values
+    rz = lambda v: (v - np.median(v)) / (1.4826 * np.median(np.abs(v - np.median(v))) + 1e-12)
+    flag, count = {}, np.zeros(n)
+    for name, s in groups.items():
+        z = np.maximum(rz(_max_other_cos(centered[:, s]).cpu().numpy()), 0.0) \
+            + np.maximum(rz(centered[:, s].norm(dim=1).cpu().numpy()), 0.0)
+        flag[name] = z > z_thr
+        count += flag[name]
+    return groups, flag, count, count >= T
+
+
+def _corr_soft_robust(deltas, weights, ctx, params, mode):
+    groups, flag, count, confirmed = _corr_detect(deltas, ctx, params)
+    n = deltas.shape[0]
+    w = weights.to(deltas.device).float()
+    mw = (w / w.sum()).unsqueeze(1)
+    beta = params.get("trim_beta", 0.2)
+    k = int(np.floor(beta * n))
+    agg = torch.zeros(deltas.shape[1], device=deltas.device, dtype=deltas.dtype)
+    for name, s in groups.items():
+        keep = (~flag[name]) & (~confirmed)
+        if not keep.any():
+            keep = ~confirmed if (~confirmed).any() else np.ones(n, dtype=bool)
+        kmask = torch.tensor(keep, device=deltas.device)
+        x = deltas[:, s].clone()
+        x[~kmask] = x[kmask].median(dim=0).values                 # substituição por consenso (corr-soft)
+        if mode == "tm":
+            xs = x.sort(dim=0).values
+            agg[s] = xs[k:n - k].mean(dim=0) if n - 2 * k > 0 else xs.median(dim=0).values
+        elif mode == "clip":
+            nrm = x.norm(dim=1)
+            cap = nrm[kmask].median()
+            x = x * (cap / nrm.clamp_min(1e-12)).clamp(max=1.0).unsqueeze(1)
+            agg[s] = (x * mw).sum(dim=0)
+        else:
+            raise ValueError(mode)
+    return agg, {"excluded_indices": sorted(np.where(confirmed)[0].tolist()),
+                 "selected_indices": [i for i in range(n) if not confirmed[i]],
+                 "kept_fraction": [1.0] * n, "confirm_count": count.tolist()}
+
+
+def layer_guard_corr_soft_tm(deltas, weights, ctx, params):
+    return _corr_soft_robust(deltas, weights, ctx, params, "tm")
+
+
+def layer_guard_corr_soft_clip(deltas, weights, ctx, params):
+    return _corr_soft_robust(deltas, weights, ctx, params, "clip")

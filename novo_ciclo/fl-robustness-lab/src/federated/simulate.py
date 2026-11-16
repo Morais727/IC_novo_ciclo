@@ -8,7 +8,7 @@ from torch.utils.data import Subset
 
 from src.config import ScenarioConfig
 from src.models.cnn import build_model
-from src.data.datasets import load_dataset, BackdoorEvalDataset, quick_subset
+from src.data.datasets import load_dataset, BackdoorEvalDataset, quick_subset, DATASET_CLASSES
 from src.data.partition import dirichlet_partition
 from src.federated.client import local_train
 from src.federated.utils import flatten, load_vector
@@ -78,9 +78,10 @@ def _build_data(cfg: ScenarioConfig, rng: np.random.Generator):
     train_full, test_full = load_dataset(cfg.dataset)
     labels = np.array(train_full.targets)
 
-    per_class = max(1, cfg.server_holdout_size // NUM_CLASSES)
+    nc = DATASET_CLASSES.get(cfg.dataset, NUM_CLASSES)
+    per_class = max(1, cfg.server_holdout_size // nc)
     holdout_idx = []
-    for c in range(NUM_CLASSES):
+    for c in range(nc):
         cls_idx = np.where(labels == c)[0]
         chosen = rng.choice(cls_idx, size=min(per_class, len(cls_idx)), replace=False)
         holdout_idx.extend(chosen.tolist())
@@ -122,7 +123,7 @@ def _train_round(model_ctor, global_vector, client_data, device, cfg: ScenarioCo
     `backdoor_pgd`) são sintetizados a partir dos deltas benignos do round.
     Retorna (deltas [N, D], weights [N]).
     """
-    n = cfg.num_clients
+    n = len(client_data)   # = cfg.num_clients, ou os participantes da rodada (client_samples_per_round)
     deltas, weights = [None] * n, [0] * n
     benign_ids = [c for c in range(n) if c not in malicious_ids]
 
@@ -218,13 +219,36 @@ def _bootstrap_ragnar(model_ctor, client_data, device, cfg: ScenarioConfig, pool
     return train_classifier(X, y, cfg.defense_params)
 
 
+def _maybe_init(global_vector):
+    """Fase 12 (13/11/2026): se FL_INIT_VECTOR aponta um .pt (vetor global salvo), o FL começa dele em vez do modelo
+    aleatório. Sem a variável, nada muda."""
+    import os
+    f = os.environ.get("FL_INIT_VECTOR")
+    if not f:
+        return global_vector
+    v = torch.load(f, map_location="cpu", weights_only=True)
+    assert v.shape == global_vector.shape, f"FL_INIT_VECTOR {f}: forma {tuple(v.shape)} != {tuple(global_vector.shape)}"
+    return v.clone()
+
+
+def _maybe_ckpt(cfg, r, global_vector):
+    """Fase 10 (12/11/2026): salva o vetor global ao FIM das rodadas listadas em FL_SAVE_ROUNDS (ex. "79,100,205"),
+    em FL_SAVE_FINAL/<nome>_r<r>.pt. Só age com as duas variáveis de ambiente; sem elas, nada muda."""
+    import os
+    rs, d = os.environ.get("FL_SAVE_ROUNDS"), os.environ.get("FL_SAVE_FINAL")
+    if rs and d and str(r) in rs.split(","):
+        os.makedirs(d, exist_ok=True)
+        torch.save(global_vector.cpu(), os.path.join(d, f"{cfg.name}_r{r}.pt"))
+
+
 def run(cfg: ScenarioConfig) -> dict:
     t_start = time.time()
     device = _resolve_device(cfg)
     torch.manual_seed(cfg.seed)
     rng = np.random.default_rng(cfg.seed)
 
-    model_ctor = lambda: build_model(cfg.model, dataset=cfg.dataset)
+    n_classes = DATASET_CLASSES.get(cfg.dataset, NUM_CLASSES)
+    model_ctor = lambda: build_model(cfg.model, num_classes=n_classes, dataset=cfg.dataset)
     client_data, server_holdout, test_full, test_eval = _build_data(cfg, rng)
 
     attack_spec = ATTACK_REGISTRY[cfg.attack]
@@ -244,6 +268,7 @@ def run(cfg: ScenarioConfig) -> dict:
         cfg.attack_params.setdefault("target_label", target_label)
 
     global_vector = flatten(model_ctor().to(device)).cpu()
+    global_vector = _maybe_init(global_vector)
 
     # nº típico de passos de SGD de um cliente por round (BOBA usa para as referências por classe)
     client_steps = [cfg.local_epochs * math.ceil(len(d) / cfg.batch_size) for d in client_data]
@@ -251,7 +276,7 @@ def run(cfg: ScenarioConfig) -> dict:
     ctx = {
         "model_ctor": model_ctor,
         "device": device,
-        "num_classes": NUM_CLASSES,
+        "num_classes": n_classes,
         "server_holdout": server_holdout,
         "global_vector": global_vector,
         "local_epochs": cfg.local_epochs,
@@ -297,6 +322,10 @@ def run(cfg: ScenarioConfig) -> dict:
     kept_params = {"benign": [], "malicious": []}   # defesas por tensor (layer_guard): fração de parâmetros aceitos
     t_rounds = time.time()
     _base_lr = cfg.lr
+    # 13/11/2026 (experimento 1.7, escala): participação parcial — K clientes sorteados por rodada, com gerador
+    # próprio (não consome o `rng` do cenário, então os cenários com todos os clientes ficam idênticos).
+    K = getattr(cfg, "client_samples_per_round", None)
+    part_rng = np.random.default_rng(cfg.seed + 7919)
     for r in range(1, cfg.rounds + 1):
         ctx["round_idx"] = r
         ctx["global_vector"] = global_vector
@@ -309,16 +338,29 @@ def run(cfg: ScenarioConfig) -> dict:
         # janela de ataque: start_round <= r <= end_round (default: do start ate o fim). Fora dela, atacantes honestos.
         start_r = cfg.attack_params.get("start_round", 1)
         end_r = cfg.attack_params.get("end_round", cfg.rounds)
-        active = malicious_ids if start_r <= r <= end_r else set()
-        deltas, weights_t = _train_round(model_ctor, global_vector, client_data, device, cfg,
+        if K and K < cfg.num_clients:
+            sel = sorted(part_rng.choice(cfg.num_clients, size=K, replace=False).tolist())
+            data_r = [client_data[c] for c in sel]
+            mal_r = {i for i, c in enumerate(sel) if c in malicious_ids}   # índices LOCAIS da rodada
+            ctx["_malicious_ids_diag_only"] = sorted(mal_r)
+        else:
+            data_r, mal_r = client_data, malicious_ids
+        active = mal_r if start_r <= r <= end_r else set()
+        deltas, weights_t = _train_round(model_ctor, global_vector, data_r, device, cfg,
                                          active, attack_spec, cfg.attack_params)
 
         defense_fn = DEFENSE_REGISTRY[cfg.defense]
-        agg_delta, info = defense_fn(deltas, weights_t, ctx, cfg.defense_params)
-        global_vector = global_vector + agg_delta
+        try:
+            agg_delta, info = defense_fn(deltas, weights_t, ctx, cfg.defense_params)
+        except torch.OutOfMemoryError:   # 15/11: GPU compartilhada cheia (2 adaptativos caíram assim) -> agrega na CPU
+            torch.cuda.empty_cache()
+            print(f"[r{r}] defesa sem memória na GPU -> refeita na CPU", flush=True)
+            agg_delta, info = defense_fn(deltas.cpu(), weights_t.cpu(), ctx, cfg.defense_params)
+        global_vector = global_vector + agg_delta.to(global_vector.device)
+        _maybe_ckpt(cfg, r, global_vector)
         excluded = set(info.get("excluded_indices", []))
         for c in range(deltas.shape[0]):
-            k = "malicious" if c in malicious_ids else "benign"
+            k = "malicious" if c in mal_r else "benign"
             accepted[k + "_total"] += 1
             accepted[k] += c not in excluded
             if "kept_fraction" in info:
@@ -329,7 +371,7 @@ def run(cfg: ScenarioConfig) -> dict:
             load_vector(model, global_vector.to(device))
             ma = accuracy(model, test_eval, device)
             ba = backdoor_success_rate(model, backdoor_eval, target_label, device) if backdoor_eval is not None else None
-            det = detection_prf(malicious_ids, info.get("excluded_indices", [])) if malicious_ids else None
+            det = detection_prf(mal_r, info.get("excluded_indices", [])) if mal_r else None
             entry = {"round": r, "main_accuracy": ma, "backdoor_asr": ba, "detection": det,
                      "elapsed_s": time.time() - t_start,
                      **{k: info[k] for k in ("prob_max", "features_out_of_range") if k in info}}

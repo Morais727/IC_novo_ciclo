@@ -11,6 +11,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import experiments.fase8e as f8e          # import já fixa o gatilho badnet_cifar
 from experiments.fase4_alpha import mem_ok
 from src.federated.simulate import run
+# 13/11/2026: salva o modelo final de toda corrida (artigo 2)
+os.environ.setdefault("FL_SAVE_FINAL", "results/models_final")
 
 
 def main():

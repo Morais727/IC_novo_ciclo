@@ -1,0 +1,67 @@
+\section{Experimentos}\label{sec:exp}
+\textbf{Resultado principal (rigor estatístico, 4 sementes).} A Tabela~\ref{tab:rigor} e a
+Fig.~\ref{fig:rigor} reportam a ASR final do backdoor (média$\pm$desvio-padrão sobre as sementes
+42--45). Nossa família por corroboração contém o ataque; as seis defesas publicadas falham em
+todas as sementes. A LASA pareceu conter com uma única semente ($13{,}5\%$) --- foi sorte da
+semente.
+
+\begin{figure}[t]\centering
+  \includegraphics[width=\linewidth]{fig_rigor_asr.pdf}
+  \caption{ASR final do backdoor no cenário fiel do LaySelFL (11 agregações, 4 sementes). Nossa
+  família (verde) fica muito abaixo do limiar de contenção de 20\%; todas as defesas publicadas
+  (laranja) falham. ``Nossa --- só por tensor'' mostra que agir tensor a tensor, sem corroborar,
+  não basta.}
+  \label{fig:rigor}
+\end{figure}
+
+\begin{table}[t]\centering\small
+\caption{ASR final do backdoor, cenário fiel do LaySelFL, 11 agregações $\times$ 4 sementes.}
+\label{tab:rigor}
+\begin{tabular}{lcc}
+\toprule
+Agregação & ASR (4 sementes) & Contém? \\
+\midrule
+Sem defesa (referência) & $77{,}7\pm10{,}4\%$ & --- (ataque se fixa) \\
+\textbf{Nossa --- expurgo do cliente} & $\mathbf{4{,}3\pm1{,}3\%}$ & sim \\
+\textbf{Nossa --- consenso (corr-soft)} & $\mathbf{5{,}5\pm2{,}0\%}$ & sim \\
+\textbf{Nossa --- corte por tensor (corr)} & $\mathbf{10{,}5\pm6{,}3\%}$ & sim (3/4) \\
+Nossa --- apenas por tensor (sn) & $61{,}8\pm20{,}1\%$ & não \\
+LASA & $21{,}7\pm7{,}6\%$ & não \\
+AlignIns & $73{,}4\pm11{,}7\%$ & não \\
+Multi-Krum & $76{,}0\pm10{,}2\%$ & não \\
+FedSurrogate & $70{,}6\pm8{,}9\%$ & não \\
+FLAME & $75{,}3\pm4{,}6\%$ & não \\
+RFLDefense & $88{,}4\pm2{,}8\%$ & não \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Generalidade.} A Fig.~\ref{fig:geral} estende o resultado a outras arquiteturas e ao
+gatilho adaptativo. O ataque se fixa na VGG19 ($95{,}6\%$) e na EfficientNet ($85{,}3\%$); nossa
+família contém na VGG19 ($9{,}2\%$, \emph{corr} $T{=}2$) e na EfficientNet ($13{,}0\%$,
+\emph{corr-soft} $T{=}2$), confirmando a regra ``corroboração mais fraca $\Rightarrow$ expurgo mais
+agressivo''.
+
+\begin{figure}[t]\centering
+  \includegraphics[width=\linewidth]{fig_generalidade.pdf}
+  \caption{Generalidade (semente 42): ASR sem defesa (laranja) vs.\ nossa melhor variante (verde).
+  A contenção se mantém em quatro dos cinco casos; a exceção (A3FL no FMNIST) é discutida na
+  Seç.~\ref{sec:limits}.}
+  \label{fig:geral}
+\end{figure}
+
+\textbf{Gatilho adaptativo (A3FL).} Sob o gatilho adversarialmente adaptativo A3FL \cite{a3fl}, o
+ataque se fixa no CIFAR-10 ($97{,}7\%$) e nossa variante \emph{corr} o contém ($12{,}6\%$). O caso do
+FMNIST ($68{,}2\%$) é uma assimetria conhecida sob investigação (Seç.~\ref{sec:limits}).
+
+\textbf{Sobrecusto.} O agente adiciona $\leq 6{,}5\%$ de tempo por rodada em relação ao FedAvg
+(Fig.~\ref{fig:overhead}), uma ordem de grandeza abaixo das defesas baseadas em busca
+geométrica (LASA, AlignIns, RFLDefense), que chegam a $50$--$93\%$ na VGG19.
+
+\begin{figure}[t]\centering
+  \includegraphics[width=\linewidth]{fig_overhead.pdf}
+  \caption{Sobrecusto de agregação por rodada (\% do tempo de treino da rodada, em GPU). Nossa
+  proposta fica junto das defesas mais baratas (FLAME, Multi-Krum) e muito abaixo das baseadas em
+  busca geométrica.}
+  \label{fig:overhead}
+\end{figure}

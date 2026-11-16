@@ -1,0 +1,10 @@
+\section{Adversário Adaptativo (conhece a defesa)}\label{sec:adaptive}
+Avaliamos um atacante onisciente que conhece a regra de corroboração, o limiar $T$ e as
+atualizações honestas da rodada. Ele (A) concentra o envenenamento em $m$ tensores --- revertendo
+os demais tensores sensíveis para sua própria atualização benigna, para que não sinalizem --- e (B)
+dessincroniza os clientes maliciosos com ruído independente, de modo que o cosseno mútuo caia; ele
+varre $(m,\nu)$ para encontrar o backdoor mais forte que mantém a contagem de corroboração abaixo de
+$T$. A hipótese sob teste (H4) é que há uma tensão fundamental: reduzir $m$ para escapar da contagem
+também reduz a fração de parâmetros do backdoor, enfraquecendo o ataque.
+\todo{inserir resultado da fase8g (rodando nas GPUs 3--5): a corr cede? e o $m$ necessário para
+evadir a contagem vs.\ o $m$ necessário para o backdoor se fixar.}

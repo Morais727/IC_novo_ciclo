@@ -55,3 +55,6 @@ results/
 
 # projeto antigo (framework FedML vendorizado) — contém segredos; fica só no dl-16
 CoUrb-2024/
+
+# pacotes pip instalados localmente (opencv para a evidência da Fase 9A) — 107 MB, não versionar
+novo_ciclo/fl-robustness-lab/.extra_cv2/

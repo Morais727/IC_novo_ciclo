@@ -1,0 +1,23 @@
+\section{Introdução}
+O aprendizado federado (FL) permite que clientes treinem um modelo compartilhado sem
+compartilhar dados, mas o servidor agrega atualizações que não pode inspecionar, o que abre
+caminho para ataques de backdoor. Uma família recente e perigosa é a de \emph{seleção de
+camadas}: o atacante treina o backdoor em um subconjunto escolhido de camadas e mantém o
+restante próximo de uma atualização benigna, de modo que agregadores robustos que atuam por
+tensor não enxergam nada anômalo em nenhum tensor isolado. O LaySelFL (CVPR 2026) \cite{laysel}
+é o estado da arte dessa família.
+
+\paragraph{Contribuições.}
+\begin{itemize}
+  \item Reproduzimos o LaySelFL fielmente e mostramos que ele se fixa no topo ($82\%$ de ASR)
+  onde \emph{seis} defesas publicadas --- incluindo a defesa cirúrgica de 2026, FedSurrogate ---
+  falham (Seç.~\ref{sec:exp}, Fig.~\ref{fig:rigor}).
+  \item Diagnosticamos a falha como um \emph{vazamento convolucional} e propomos a
+  \emph{corroboração entre camadas}: decidir pelo cliente contando os tensores que o acusam,
+  e não tensor a tensor (Seç.~\ref{sec:method}, Fig.~\ref{fig:corrob}).
+  \item Mostramos a contenção com rigor estatístico (4 sementes), generalidade entre
+  arquiteturas e sob o gatilho adaptativo A3FL, e baixo sobrecusto, sem dados limpos no
+  servidor (Seç.~\ref{sec:exp}, Figs.~\ref{fig:geral} e~\ref{fig:overhead}).
+  \item Enunciamos o modelo de ameaça ($\geq 2$ atacantes em conluio) e avaliamos um adversário
+  adaptativo que conhece a regra de corroboração (Seç.~\ref{sec:adaptive}).
+\end{itemize}

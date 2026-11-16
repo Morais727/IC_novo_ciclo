@@ -1,0 +1,10 @@
+defesa,"ResNet18-GN
+CIFAR-10","VGG19-GN
+CIFAR-10","ResNet18-GN
+FMNIST"
+Nossa proposta,4.2,6.5,3.6
+FLAME,1.9,2.8,1.6
+Multi-Krum,0.9,1.8,1.0
+AlignIns,27.6,49.4,26.6
+RFLDefense,36.4,49.5,36.3
+LASA,51.9,93.2,50.1

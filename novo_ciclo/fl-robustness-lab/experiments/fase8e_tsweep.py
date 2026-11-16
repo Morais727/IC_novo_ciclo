@@ -24,7 +24,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--tvals", required=True, help="valores de T separados por virgula, ex.: 4,11,14")
     ap.add_argument("--defense", default="layer_guard_corr")
+    ap.add_argument("--seed", type=int, default=fase8e.SEED, help="13/11: varredura de T em outras sementes")
     a = ap.parse_args()
+    fase8e.SEED = a.seed
     (OUT / "raw").mkdir(parents=True, exist_ok=True)
     for T in [int(x) for x in a.tvals.split(",")]:
         name = f"laysel_paper__{a.defense}_T{T}__a{fase8e.ALPHA}_s{fase8e.SEED}"

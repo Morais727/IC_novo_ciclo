@@ -1,0 +1,11 @@
+\section{Modelo de Ameaça e Configuração}\label{sec:setup}
+\textbf{Modelo de ameaça.} Até $m$ dos $n$ clientes são maliciosos e estão em \emph{conluio}:
+compartilham um objetivo de backdoor e enviam atualizações envenenadas semelhantes. O servidor
+não tem dados rotulados (exceto um pequeno conjunto limpo usado apenas pela sonda opcional).
+Assumimos $\geq 2$ atacantes em conluio; um único atacante isolado está fora do escopo do sinal
+de corroboração (Seç.~\ref{sec:adaptive}).
+
+\textbf{Cenário fiel (LaySelFL).} ResNet18-GN, CIFAR-10, 20 clientes (6 maliciosos), Dirichlet
+$\alpha{=}0{,}9$, 205 rodadas, ataque ativo nas rodadas 80--200, gatilho BadNet, classe-alvo 4,
+fração de envenenamento 0{,}2. Critério de sucesso fixado antes de rodar: uma defesa
+\emph{contém} o ataque se a ASR final for $\leq 20\%$.

@@ -1,0 +1,54 @@
+% =====================================================================
+% Artigo (entregável M11) --- VERSÃO EM PORTUGUÊS, modular.
+% Montado em 10/11/2026 a partir dos resultados REAIS do laboratório
+% (fl-robustness-lab/results/). Figuras em figuras/ são geradas por
+% gerar_figuras.py (dados auditados; ver dados/*.csv).
+%
+% Estrutura:
+%   main.tex            -> preâmbulo + \input das seções
+%   secoes/*.tex        -> uma seção por arquivo
+%   figuras/*.pdf       -> figuras (vetoriais) geradas de dados reais
+%   dados/*.csv         -> números por figura (reprodutibilidade)
+%
+% Para compilar no Overleaf: subir a pasta inteira (zip) e definir main.tex
+% como documento principal. Trocar o documentclass pelo template da
+% conferência-alvo quando definido. Lacunas restantes: \todo{...}.
+% =====================================================================
+\documentclass[10pt,conference]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazil]{babel}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{subcaption}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue}
+
+\graphicspath{{figuras/}}
+\newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
+
+\title{Contenção de Backdoors com Seleção de Camadas em\\
+Aprendizado Federado por Corroboração entre Camadas}
+\author{Marcos G. O. Morais \quad Leandro A. Villas\\
+\small Instituto de Computação, Universidade Estadual de Campinas (UNICAMP) --- H.IAAC\\
+\small \texttt{\{marcos.morais, leandro.villas\}@ic.unicamp.br}}
+\date{Rascunho --- \today}
+
+\begin{document}
+\maketitle
+
+\input{secoes/00_resumo}
+\input{secoes/01_introducao}
+\input{secoes/02_relacionados}
+\input{secoes/03_ameaca}
+\input{secoes/04_metodo}
+\input{secoes/05_experimentos}
+\input{secoes/06_adaptativo}
+\input{secoes/07_limitacoes}
+\input{secoes/08_conclusao}
+\input{secoes/referencias}
+
+\end{document}

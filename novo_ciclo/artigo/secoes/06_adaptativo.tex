@@ -6,5 +6,40 @@ dessincroniza os clientes maliciosos com ruído independente, de modo que o coss
 varre $(m,\nu)$ para encontrar o backdoor mais forte que mantém a contagem de corroboração abaixo de
 $T$. A hipótese sob teste (H4) é que há uma tensão fundamental: reduzir $m$ para escapar da contagem
 também reduz a fração de parâmetros do backdoor, enfraquecendo o ataque.
-\todo{inserir resultado da fase8g (rodando nas GPUs 3--5): a corr cede? e o $m$ necessário para
-evadir a contagem vs.\ o $m$ necessário para o backdoor se fixar.}
+\textbf{Resultado.} O atacante adaptativo vence a corroboração (Tabela~\ref{tab:adapt}, sementes 42--47):
+a ASR final é $62{,}5\%$ contra a \emph{corr} e $53{,}5\%$ contra a \emph{corr-soft}, ante $83{,}4\%$ sem
+defesa com o mesmo ataque concentrado. A \emph{client} resiste mais ($25{,}0\%$ em média), mas é instável
+(de $6{,}0$ a $58{,}5\%$ entre sementes) e perde $8{,}4$\,pp de acurácia. A hipótese H4 se confirma só em
+parte: o atacante raramente consegue deixar \emph{todos} os maliciosos abaixo de $T$ na mesma rodada
+($1$--$3\%$ das rodadas), mas não precisa disso. Em $37\%$ dos pares (atacante, rodada) contra a
+\emph{corr-soft}, um malicioso fica abaixo de $T$ e entra na agregação sem ser confirmado; o veneno passa
+aos poucos, por dois ou três atacantes a cada rodada, e o backdoor se acumula.
+
+\textbf{O custo imposto ao atacante.} A defesa não impede o ataque, mas o encarece. Contra a
+\emph{corr-soft}, o backdoor leva o dobro do tempo para pegar: chega a $50\%$ na rodada $165$, ou seja,
+$85$ rodadas depois do início do ataque, contra $43$ rodadas sem defesa; a ASR média durante o ataque
+cai de $62{,}1$ para $37{,}7\%$; a final, de $83{,}4$ para $53{,}5\%$ ($-30$\,pp). Contra a \emph{client},
+o ataque só passa de $20\%$ por volta da rodada $167$ e, em 5 das 6 sementes, nunca chega a $50\%$.
+
+\begin{table}[t]\centering\small
+\caption{Atacante adaptativo ciente da corroboração, cenário fiel do LaySelFL, sementes 42--47 (médias).
+O ataque começa na rodada 80. Valores de ASR e acurácia em \%.}
+\label{tab:adapt}
+\begin{tabular}{lccccc}
+\toprule
+Agregação & ASR final & ASR média no ataque & ASR $\geq 50\%$ na rodada & Acurácia \\
+\midrule
+Sem defesa (ataque concentrado) & $83{,}4$ & $62{,}1$ & $123$ & $76{,}8$ \\
+corr & $62{,}5$ & $43{,}3$ & $155$ & $74{,}8$ \\
+\textbf{corr-soft} & $53{,}5$ & $37{,}7$ & $165$ & $74{,}5$ \\
+client & $25{,}0$ & $15{,}5$ & $180$ (5 de 6 nunca) & $68{,}4$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Respostas testadas.} Aplicar uma agregação robusta depois da corroboração não resolveu, contra um
+atacante que também conhece essa agregação (sementes 42--45): com corte de norma por tensor a ASR final
+fica em $60{,}2\%$ e com média aparada em $72{,}5\%$. Um atacante intermediário, que conhece a regra da
+contagem mas não simula a agregação, chega a $62{,}8\%$ contra o corte de norma. Duas variantes que atacam
+diretamente o vazamento abaixo de $T$ --- peso gradual em função da contagem e $T$ sorteado em segredo a
+cada rodada --- estão em avaliação. \todo{inserir resultado da Fase 20.}

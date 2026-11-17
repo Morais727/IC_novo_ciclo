@@ -6,6 +6,7 @@ dessincroniza os clientes maliciosos com ruído independente, de modo que o coss
 varre $(m,\nu)$ para encontrar o backdoor mais forte que mantém a contagem de corroboração abaixo de
 $T$. A hipótese sob teste (H4) é que há uma tensão fundamental: reduzir $m$ para escapar da contagem
 também reduz a fração de parâmetros do backdoor, enfraquecendo o ataque.
+
 \textbf{Resultado.} O atacante adaptativo vence a corroboração (Tabela~\ref{tab:adapt}, sementes 42--47):
 a ASR final é $62{,}5\%$ contra a \emph{corr} e $53{,}5\%$ contra a \emph{corr-soft}, ante $83{,}4\%$ sem
 defesa com o mesmo ataque concentrado. A \emph{client} resiste mais ($25{,}0\%$ em média), mas é instável
@@ -25,7 +26,7 @@ o ataque só passa de $20\%$ por volta da rodada $167$ e, em 5 das 6 sementes, n
 \caption{Atacante adaptativo ciente da corroboração, cenário fiel do LaySelFL, sementes 42--47 (médias).
 O ataque começa na rodada 80. Valores de ASR e acurácia em \%.}
 \label{tab:adapt}
-\begin{tabular}{lccccc}
+\begin{tabular}{lcccc}
 \toprule
 Agregação & ASR final & ASR média no ataque & ASR $\geq 50\%$ na rodada & Acurácia \\
 \midrule

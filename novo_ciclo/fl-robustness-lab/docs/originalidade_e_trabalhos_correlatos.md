@@ -76,7 +76,7 @@ Busca em arXiv/USENIX/NDSS/IEEE/ACM/Springer (04/11/2026). Classificados por pro
 
 ### 3.2 Correlatos diretos (comparar/baseline)
 
-- **RFLDefense** (Springer/Cybersecurity 2026, DOI 10.1186/s42400-026-00679-z — *baixar manual*).
+- **RFLDefense** — Shi, Gong e He, *RFLDefense: robust federated learning defense against targeted attacks*, Cybersecurity 9:234 (out/2026), DOI 10.1186/s42400-026-00679-z. PDF em ~/IC/artigos/RFLDefense_Cybersecurity2026_s42400-026-00679-z.pdf (16/11). Ataques avaliados (§Experimental setup): FLIP (troca de rótulo direcionada), MR (model replacement/scaling), DBA, EDGE, NEUR (Neurotoxin); CIFAR-10, FMNIST, EMNIST; 500 clientes, 100 por rodada, Dirichlet 0,5; 50% de atacantes nas rodadas adversariais (prob. 0,5), 60 rodadas a partir de modelo quase convergido; compara com RLR, FedCC, FoolsGold, FLAME, RoseAgg, AlignIns.
   *Layer-wise*: similaridade local–global + **consistência de sinal por camada** + agregação ponderada robusta; não
   precisa de dados limpos. **É uma das nossas concorrentes** (e perde para o LaySelFL na Fase 8E). Diferença: usa sinal
   de consistência/peso; a nossa usa cosseno par-a-par + norma em z robusto **com voto entre camadas**.
@@ -216,6 +216,6 @@ apresentada honestamente como "gate de corroboração estilo-FLD sobre o nosso s
 | 4 | FL-PLAS — Partial Layer Aggregation | arXiv 2505.12019 | `FL-PLAS_PartialLayerAggregation_arxiv2505.12019.pdf` |
 | 5 | FoolsGold — limitations of FL in sybil settings | arXiv 1808.04866 (RAID 2020) | `FoolsGold_SybilsFL_arxiv1808.04866.pdf` |
 | 6 | Survey — FL poisoning attacks & defenses | arXiv 2306.03397 | `Survey_FL_Poisoning_Attacks_Defenses_arxiv2306.03397.pdf` |
-| 7 | RFLDefense | Springer/Cybersecurity 2026, DOI 10.1186/s42400-026-00679-z | *(baixar manual — anti-bot)* |
+| 7 | RFLDefense | Springer/Cybersecurity 2026, DOI 10.1186/s42400-026-00679-z | ~/IC/artigos/RFLDefense_Cybersecurity2026_s42400-026-00679-z.pdf |
 | 8 | LaySelFL (ataque alvo) | Li et al., CVPR 2026 | `LaySelFL_Li_CVPR2026_Eliminate_Distance_Differences.pdf` |
 | 9 | LP / Backdoor-Critical Layers (ataque) | Zhuang et al., ICLR 2024 / arXiv 2308.04466 | *(já no acervo: `2689_Backdoor_Federated_Learni.pdf`)* |

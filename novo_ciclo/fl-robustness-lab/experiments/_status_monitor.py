@@ -15,11 +15,11 @@ QLOG = f"{ROOT}/results/fase10/_fila_gpu.log"
 DEADLINE = datetime(2026, 11, 21, 23, 0)
 RX = re.compile(r"round (\d+)/(\d+) MA=([\d.]+)% BA=([\d.]+)%.*\((\d+)s\)\s*$")
 # duração típica (h) de um job inteiro por prefixo, usada só para quem ainda não começou
-TYP = {"g13_escala100": 15, "m78": 0.3, "adp": 12, "a16": 14, "f8e": 7, "impf": 7, "g13": 8, "tsw": 7, "fp": 4, "rea": 1.5, "analise": 0.6, "c2": 1}
+TYP = {"a20": 30, "p20": 8, "f19": 0.3, "g13_escala100": 15, "l18": 7, "a17": 30, "m78": 0.3, "adp": 12, "a16": 14, "f8e": 7, "impf": 7, "g13": 8, "tsw": 7, "fp": 4, "rea": 1.5, "analise": 0.6, "c2": 1}
 
 
 def group(tag):
-    for p, name in (("m78", "M7/M8 detecção"), ("a16", "Resposta ao adaptativo"), ("p16", "Resposta ao adaptativo"), ("adp", "Adversário adaptativo"),
+    for p, name in (("a20", "Resposta ao adaptativo 2 (fase 20)"), ("p20", "Resposta ao adaptativo 2 (fase 20)"), ("f19", "Ataques das defesas citadas"), ("m78", "M7/M8 detecção"), ("l18", "Linha de base limpa"), ("a17", "Atacante intermediário"), ("a16", "Resposta ao adaptativo"), ("p16", "Resposta ao adaptativo"), ("adp", "Adversário adaptativo"),
                     ("f8e", "Tabela principal"), ("impf", "Modelos finais (especificidade)"), ("rea", "Reativação"),
                     ("g13_escala", "Escala"), ("g13_cifar", "CIFAR-100"), ("tsw", "Varredura de T"),
                     ("fp", "Falsos positivos"), ("analise", "Análises"), ("c2", "Cenário 2")):
@@ -86,6 +86,29 @@ def progress(log):
     return dict(round=int(r), total=int(tot), ma=ma, asr=ba, spr=spr, mtime=mtime)
 
 
+def _gate_failed(kind, seed):
+    """Veredito em cache da fila (results/fase10/.gate_cache): 1 = não pegou."""
+    for f in glob.glob(f"{ROOT}/results/fase10/.gate_cache/gate*_{kind}__lg_shadow__s{seed}.json_*"):
+        return open(f).read().strip() == "1"
+    return None
+
+
+def waiting(tag):
+    """'' = pronto para rodar; 'descartado' = depende de um portão que não pegou; outro texto = aguardando condição."""
+    m = re.match(r"g13_(\w+?)__(\w+)__s(\d+)$", tag)
+    if m and m.group(2) != "lg_shadow":
+        kind, seed = m.group(1), m.group(3)
+        if not os.path.exists(f"{ROOT}/results/fase13/raw/{kind}__lg_shadow__s{seed}.json"):
+            return "portão"
+        return "descartado" if _gate_failed(kind, seed) else ""
+    m = re.match(r"rea_(.+)_(reativacao|dormencia)$", tag)
+    if m and not os.path.exists(f"{ROOT}/results/fase10/models/{m.group(1)}.pt"):
+        return "modelo"
+    if tag.startswith("analise_"):
+        return "dependências"
+    return ""
+
+
 def snapshot():
     now = datetime.now()
     qname, jobs = queue_defs()
@@ -106,7 +129,7 @@ def snapshot():
     groups = {}
     pend_hours = 0.0
     for t, (st, u) in jobs.items():
-        g = groups.setdefault(group(t), {"feitos": 0, "rodando": 0, "fila": 0, "expirados": 0})
+        g = groups.setdefault(group(t), {"feitos": 0, "rodando": 0, "fila": 0, "aguardando": 0, "descartados": 0, "expirados": 0})
         if st == "done":
             g["feitos"] += 1
         elif t in run_tags:
@@ -116,15 +139,20 @@ def snapshot():
                 exp = datetime.strptime(u, "%Y-%m-%d %H:%M") < now
             except ValueError:
                 exp = False
+            w = waiting(t)
             if exp:
                 g["expirados"] += 1
+            elif w == "descartado":
+                g["descartados"] += 1
+            elif w:
+                g["aguardando"] += 1
             else:
                 g["fila"] += 1
                 pend_hours += next((v for k, v in TYP.items() if t.startswith(k)), 7)
     run_hours = sum(((r["total"] - r["round"]) * r["spr"] / 3600) for r in running if r.get("spr") and r.get("total"))
     slots = max(len(running), 1)
     eta_all = now + timedelta(hours=(pend_hours + run_hours) / slots)
-    tot = {k: sum(g[k] for g in groups.values()) for k in ("feitos", "rodando", "fila", "expirados")}
+    tot = {k: sum(g[k] for g in groups.values()) for k in ("feitos", "rodando", "fila", "aguardando", "descartados", "expirados")}
     gpus = []
     try:
         q = subprocess.run(["nvidia-smi", "--query-gpu=index,utilization.gpu,memory.used,memory.total",

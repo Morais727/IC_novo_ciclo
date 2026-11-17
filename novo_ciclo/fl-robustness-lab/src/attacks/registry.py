@@ -36,6 +36,21 @@ ATTACK_REGISTRY = {
     "lie": {"kind": "model", "craft_fn": MODEL_POISONING_ATTACKS["lie"]},
     "minmax": {"kind": "model", "craft_fn": MODEL_POISONING_ATTACKS["minmax"]},
     "minsum": {"kind": "model", "craft_fn": MODEL_POISONING_ATTACKS["minsum"]},
+    "byzmean": {"kind": "model", "craft_fn": MODEL_POISONING_ATTACKS["byzmean"]},
+    # 16/11 (fase 19): ataques usados por FLAME, AlignIns, FLD e FedSurrogate que faltavam no laboratório
+    # Scaling / constrain-and-scale (Bagdasaryan et al.): backdoor com gatilho e o delta multiplicado por `scale`,
+    # SEM limite de norma (AlignIns usa fator 2).
+    "backdoor_scaling": {"kind": "data+postprocess", "dataset_fn": BACKDOOR_DATA_ATTACKS["backdoor_pixel"],
+                         "post_fn": POST_PROCESS_ATTACKS["constrain_and_scale"], "no_bound": True, "eval": "trigger"},
+    # Neurotoxin (Zhang et al., ICML 2022): o atacante só escreve nas coordenadas que os honestos MENOS atualizam
+    # (zera o top-k% por magnitude da média benigna da rodada), para o backdoor durar. Aproximação: projeção feita
+    # uma vez depois do treino local (o original projeta a cada passo).
+    # FLIP direcionado (Bhagoji et al. 2019; RFLDefense, FLD): conjunto auxiliar da classe `source` com rótulo alvo,
+    # misturado a dados limpos locais (mesmo encaixe do edge-case, sem PGD e sem escala); ASR na classe `source` do teste.
+    "flip_targeted": {"kind": "data", "dataset_fn": recent.edge_case_dataset, "eval": "edge", "edge_case": True,
+                      "flip_targeted": True},
+    "neurotoxin": {"kind": "data+postprocess", "dataset_fn": BACKDOOR_DATA_ATTACKS["backdoor_pixel"],
+                   "post_fn": recent.neurotoxin_mask, "no_bound": True, "eval": "trigger"},
 
     # --- ataques recentes (2020–2024)
     "mimic": {"kind": "model", "craft_fn": recent.mimic},

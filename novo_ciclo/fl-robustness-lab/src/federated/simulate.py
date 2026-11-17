@@ -95,6 +95,17 @@ def _build_data(cfg: ScenarioConfig, rng: np.random.Generator):
         if p.get("edge_source") == "southwest":   # imagens externas do artigo (nada é retirado do CIFAR-10)
             from src.attacks.recent import SouthwestDataset
             cfg._edge = {"train": SouthwestDataset("train"), "test": SouthwestDataset("test")}
+    if ATTACK_REGISTRY.get(cfg.attack, {}).get("flip_targeted"):
+        # 16/11 (fase 19): troca de rótulo DIRECIONADA (FLIP; Bhagoji et al. 2019, como avaliada no RFLDefense e no
+        # FLD): os atacantes têm um conjunto auxiliar de `aux_n` imagens da classe `source` rotuladas como o alvo,
+        # sem gatilho; as mesmas imagens podem existir, com o rótulo certo, nos dados dos honestos.
+        # Sucesso = imagem de teste da classe `source` classificada como o alvo.
+        p = cfg.attack_params
+        src_c = p.get("source", 0)
+        tr_src = np.setdiff1d(np.where(np.array(train_full.targets) == src_c)[0], holdout_idx)
+        aux = np.random.default_rng(cfg.seed).choice(tr_src, size=min(int(p.get("aux_n", 500)), len(tr_src)), replace=False)
+        te_src = np.where(np.array(test_full.targets) == src_c)[0]
+        cfg._edge = {"train": Subset(train_full, aux.tolist()), "test": Subset(test_full, te_src.tolist())}
     if cfg._edge is None and ATTACK_REGISTRY.get(cfg.attack, {}).get("edge_case"):
         p = cfg.attack_params
         edge_tr, edge_te = select_edge_cases(train_full, test_full, p.get("source", 0), p.get("edge_fraction", 0.05))
@@ -151,13 +162,15 @@ def _train_round(model_ctor, global_vector, client_data, device, cfg: ScenarioCo
                 deltas[mid] = individual[k] if individual is not None else crafted.clone()
                 weights[mid] = max(len(client_data[mid]), 1)
         elif kind == "model":
-            malicious_vector = attack_spec["craft_fn"](benign_deltas, attack_params)
-            for mid in malicious_ids:
-                deltas[mid] = malicious_vector
+            malicious_vector = attack_spec["craft_fn"](benign_deltas, {**attack_params, "_n_mal": len(malicious_ids),
+                                                                        "_n_total": len(malicious_ids) + len(benign_deltas)})
+            for k, mid in enumerate(sorted(malicious_ids)):
+                # 16/11: craft_fn pode devolver um vetor por atacante (ByzMean); senão, todos enviam o mesmo
+                deltas[mid] = malicious_vector[k] if malicious_vector.dim() == 2 else malicious_vector
                 weights[mid] = max(len(client_data[mid]), 1)
         else:
             radius, eps = None, None
-            if kind == "data+postprocess":
+            if kind == "data+postprocess" and not attack_spec.get("no_bound"):   # 16/11: Scaling/Neurotoxin sem limite
                 eps = pgd_norm_bound(benign_deltas, attack_params)
                 radius = eps / attack_params.get("scale", 1.0)
             for k, mid in enumerate(sorted(malicious_ids)):
@@ -175,7 +188,8 @@ def _train_round(model_ctor, global_vector, client_data, device, cfg: ScenarioCo
                                                                   "edge_dataset": (getattr(cfg, "_edge", None) or {}).get("train")})
                 delta, _ = train(dataset, project_radius=radius)
                 if kind == "data+postprocess":
-                    delta = attack_spec["post_fn"](delta, {**attack_params, "max_norm": eps})
+                    delta = attack_spec["post_fn"](delta, {**attack_params, "max_norm": eps,
+                                                           "_benign_mean": benign_deltas.mean(0)})
                 # peso declarado = tamanho dos dados locais do cliente (como um honesto e como nos ataques de
                 # modelo), não o do conjunto envenenado — o edge-case treina num conjunto menor e misturado
                 deltas[mid], weights[mid] = delta, max(len(client_data[mid]), 1)

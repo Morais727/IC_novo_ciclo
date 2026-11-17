@@ -284,7 +284,15 @@ def _corr_soft_robust(deltas, weights, ctx, params, mode):
         kmask = torch.tensor(keep, device=deltas.device)
         x = deltas[:, s].clone()
         x[~kmask] = x[kmask].median(dim=0).values                 # substituição por consenso (corr-soft)
-        if mode == "tm":
+        if mode == "grad":
+            # 17/11 (fase 20, variante 1): peso GRADUAL — o não confirmado com c acusações é puxado para o consenso na
+            # proporção c/T (sem degrau logo abaixo de T): x_i = (1 − c_i/T)·Δ_i + (c_i/T)·mediana dos aceitos.
+            Tq = float(params.get("confirm_tensors", 8))
+            med = x[kmask].median(dim=0).values
+            frac = torch.tensor(np.clip(count / Tq, 0.0, 1.0), device=x.device, dtype=x.dtype).unsqueeze(1)
+            x = torch.where(kmask.unsqueeze(1), (1 - frac) * x + frac * med, x)
+            agg[s] = (x * mw).sum(dim=0)
+        elif mode == "tm":
             xs = x.sort(dim=0).values
             agg[s] = xs[k:n - k].mean(dim=0) if n - 2 * k > 0 else xs.median(dim=0).values
         elif mode == "clip":
@@ -305,3 +313,25 @@ def layer_guard_corr_soft_tm(deltas, weights, ctx, params):
 
 def layer_guard_corr_soft_clip(deltas, weights, ctx, params):
     return _corr_soft_robust(deltas, weights, ctx, params, "clip")
+
+
+def layer_guard_corr_soft_grad(deltas, weights, ctx, params):
+    """Fase 20 (17/11/2026), variante 1 da resposta ao adaptativo — desenho fixado antes de rodar: mesma detecção da
+    corr-soft (z_thr = 3, T = 8); o confirmado e o par (cliente, tensor) acusado são trocados pelo consenso, como na
+    corr-soft; o NÃO confirmado com c acusações é puxado para o consenso na proporção c/T em todos os tensores. Tira o
+    degrau que o atacante adaptativo explora ao ficar logo abaixo de T."""
+    return _corr_soft_robust(deltas, weights, ctx, params, "grad")
+
+
+def layer_guard_corr_soft_rand(deltas, weights, ctx, params):
+    """Fase 20 (17/11/2026), variante 2 — desenho fixado antes de rodar: corr-soft com T SORTEADO EM SEGREDO a cada
+    rodada, uniforme em {T_lo, ..., T_hi} (padrão {4, ..., 8}), por um gerador do servidor que o atacante não vê. O
+    atacante conhece a regra e a distribuição de T, não o sorteio."""
+    st = ctx["state"]
+    if "_rand_T_rng" not in st:
+        st["_rand_T_rng"] = np.random.default_rng(int(params.get("rand_seed", 917317)))
+    lo, hi = int(params.get("T_lo", 4)), int(params.get("T_hi", params.get("confirm_tensors", 8)))
+    Tr = int(st["_rand_T_rng"].integers(lo, hi + 1))
+    agg, info = layer_guard_corr_soft(deltas, weights, ctx, {**params, "confirm_tensors": Tr})
+    info["T_round"] = Tr
+    return agg, info

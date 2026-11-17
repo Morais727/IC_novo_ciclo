@@ -91,6 +91,19 @@ def minsum(benign_stack: torch.Tensor, params: dict) -> torch.Tensor:
     return mean + lo * p
 
 
+def byzmean(benign_stack: torch.Tensor, params: dict) -> torch.Tensor:
+    """ByzMean (Xu et al., ICDCS 2022; usado por AlignIns e LASA), construído sobre o LIE: metade dos atacantes envia o
+    vetor do LIE (v) e a outra metade envia u, escolhido para que a MÉDIA de todos os clientes seja exatamente v.
+    Devolve um vetor por atacante [m, d]."""
+    m = int(params.get("_n_mal", 1)); n = int(params.get("_n_total", m + benign_stack.shape[0]))
+    v = lie(benign_stack, params)
+    m1 = max(m // 2, 1); m2 = m - m1
+    if m2 == 0:
+        return v.unsqueeze(0).repeat(m, 1)
+    u = (n * v - m1 * v - benign_stack.sum(0)) / m2
+    return torch.stack([v] * m1 + [u] * m2)
+
+
 MODEL_POISONING_ATTACKS = {
     "gaussian_noise": gaussian_noise,
     "sign_flip": sign_flip,
@@ -98,4 +111,5 @@ MODEL_POISONING_ATTACKS = {
     "lie": lie,
     "minmax": minmax,
     "minsum": minsum,
+    "byzmean": byzmean,
 }

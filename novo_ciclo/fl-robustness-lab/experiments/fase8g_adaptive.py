@@ -34,7 +34,19 @@ OUT = Path("results/fase8g")
 SH = fase6.SH
 ALPHA, SEED, T = 0.9, 42, 8
 DEFENSES = [SH, "layer_guard_corr", "layer_guard_client", "layer_guard_corr_soft"]
-AGG_AWARE = ("layer_guard_corr_soft_tm", "layer_guard_corr_soft_clip")   # resposta ao adaptativo (15/11)
+AGG_AWARE = ("layer_guard_corr_soft_tm", "layer_guard_corr_soft_clip",   # resposta ao adaptativo (15/11)
+             "layer_guard_corr_soft_grad", "layer_guard_corr_soft_rand")  # fase 20 (17/11)
+# 17/11 (fase 20): na variante de T sorteado, o atacante simula a corr-soft com cada T possível ({4..8}) e maximiza o
+# empurrão esperado — conhece a regra e a distribuição, não o sorteio do servidor.
+RAND_T_DIST = [4, 6, 8]   # o servidor sorteia em {4..8}; o atacante aproxima a esperança com 3 pontos (custo)
+# 16/11 (fase 17, pedido do usuário): atacante INTERMEDIÁRIO — conhece T e a regra de corroboração (o mesmo da fase 8G),
+# mas NÃO a agregação robusta que vem depois. Desenho fixado antes de rodar: corr-soft + corte de norma, sementes 44 e 45
+# (as mesmas em que o atacante ciente da agregação já fechou: 57,9 / 60,4%). Saída com sufixo "-semagg".
+NAIVE_AGG = False
+
+
+def tag(defense):
+    return defense + ("-semagg" if NAIVE_AGG else "")
 
 
 def cfg(defense):
@@ -42,14 +54,17 @@ def cfg(defense):
     c.attack_params["evade_corr"] = True         # <<< liga o adversário adaptativo ciente da corroboração
     c.attack_params["evade_T"] = T               # o atacante mira exatamente o T da defesa
     c.attack_params["confirm_tensors"] = T       # a defesa corr usa o mesmo T
-    if defense in AGG_AWARE:                     # 15/11 (fase16): atacante também ciente da AGREGAÇÃO da variante
+    if defense in AGG_AWARE and not NAIVE_AGG:   # 15/11 (fase16): atacante também ciente da AGREGAÇÃO da variante
         c.attack_params["evade_score_defense"] = defense
-    c.name = f"laysel_adapt_T{T}__{defense}__a{ALPHA}_s{SEED}"
+        if defense == "layer_guard_corr_soft_rand":
+            c.attack_params["evade_score_defense"] = "layer_guard_corr_soft"
+            c.attack_params["evade_T_dist"] = RAND_T_DIST
+    c.name = f"laysel_adapt_T{T}__{tag(defense)}__a{ALPHA}_s{SEED}"
     return c
 
 
 def path(defense):
-    return OUT / "raw" / f"laysel_adapt_T{T}__{defense}__a{ALPHA}_s{SEED}.json"
+    return OUT / "raw" / f"laysel_adapt_T{T}__{tag(defense)}__a{ALPHA}_s{SEED}.json"
 
 
 def final(defense):
@@ -105,7 +120,7 @@ def report():
 
 
 def main():
-    global SEED, T
+    global SEED, T, NAIVE_AGG
     ap = argparse.ArgumentParser()
     for f in ("--one", "--report", "--missing", "--gate-only"):
         ap.add_argument(f, action="store_true")
@@ -113,7 +128,9 @@ def main():
     ap.add_argument("--T", type=int, default=T)
     ap.add_argument("--no-gate", action="store_true", help="13/11: roda a defesa sem esperar o portão (prazo da máquina dl-16)")
     ap.add_argument("--defense", help="roda só esta defesa (12/11: permite paralelizar as defesas entre GPUs; defesas só rodam se o portão já pegou)")
+    ap.add_argument("--naive-agg", action="store_true", help="16/11: atacante conhece T mas não a agregação robusta (fase 17)")
     a = ap.parse_args()
+    NAIVE_AGG = a.naive_agg
     SEED, T = a.seed, a.T
     (OUT / "raw").mkdir(parents=True, exist_ok=True)
     if a.report:

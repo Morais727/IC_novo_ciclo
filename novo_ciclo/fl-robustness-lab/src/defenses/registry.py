@@ -1,6 +1,6 @@
 from src.defenses.aggregators import AGGREGATORS
 from src.defenses.flame import flame
-from src.defenses.layer_guard import layer_guard, layer_guard_sn, layer_guard_client, layer_guard_corr, layer_guard_corr_soft, layer_guard_corr_soft_tm, layer_guard_corr_soft_clip, layerguard, layerguard_cliponly, lg_shadow
+from src.defenses.layer_guard import layer_guard, layer_guard_sn, layer_guard_client, layer_guard_corr, layer_guard_corr_soft, layer_guard_corr_soft_tm, layer_guard_corr_soft_clip, layer_guard_corr_soft_grad, layer_guard_corr_soft_rand, layerguard, layerguard_cliponly, lg_shadow
 from src.defenses.fedsurrogate import fedsurrogate
 from src.defenses.repair import fedavg_prune
 from src.defenses.dump import fedavg_dump
@@ -24,6 +24,8 @@ DEFENSE_REGISTRY = {
     "layer_guard_corr_soft": layer_guard_corr_soft,
     "layer_guard_corr_soft_tm": layer_guard_corr_soft_tm,
     "layer_guard_corr_soft_clip": layer_guard_corr_soft_clip,
+    "layer_guard_corr_soft_grad": layer_guard_corr_soft_grad,   # fase 20 (17/11)
+    "layer_guard_corr_soft_rand": layer_guard_corr_soft_rand,   # fase 20 (17/11)
     "layerguard": layerguard,
     "layerguard_cliponly": layerguard_cliponly,
     "lg_shadow": lg_shadow,

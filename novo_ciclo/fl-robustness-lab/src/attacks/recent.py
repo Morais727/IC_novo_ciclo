@@ -450,6 +450,12 @@ def _evade_corr(out, cleans, senslist, benign_deltas, groups, model_ctor, params
         sp = {"z_thr": z_thr, "confirm_tensors": T}
         base = torch.cat([torch.stack(cleans).to(dev), ben])
         agg0, _ = sfn(base, torch.ones(len(base)), sctx, sp)
+        # 17/11 (fase 20, variante 2): T sorteado em segredo pelo servidor. O atacante conhece a DISTRIBUIÇÃO de T
+        # (evade_T_dist), não o sorteio: escolhe a config de maior empurrão ESPERADO (média sobre os T possíveis) e
+        # não exige evadir um T específico.
+        T_dist = params.get("evade_T_dist")
+        if T_dist:
+            agg0s = {t: sfn(base, torch.ones(len(base)), sctx, {"z_thr": z_thr, "confirm_tensors": t})[0] for t in T_dist}
 
     def build(keep, nu, gamma=1.0):
         ds = []
@@ -472,7 +478,12 @@ def _evade_corr(out, cleans, senslist, benign_deltas, groups, model_ctor, params
                 _, info = fn(stack, torch.ones(len(stack)), ctx, {"z_thr": z_thr, "confirm_tensors": T})
                 cnt = np.array(info["confirm_count"][:n_mal])
                 sc = None
-                if (cnt < T).all():
+                if score_def and params.get("evade_T_dist"):
+                    sc = float(np.mean([float((sfn(stack.to(dev), torch.ones(len(stack)), sctx,
+                                                   {"z_thr": z_thr, "confirm_tensors": t})[0] - agg0s[t]) @ bvec / bn)
+                                        for t in params["evade_T_dist"]]))
+                    evaders.append((m, nu, gamma, ds, cnt, sc))
+                elif (cnt < T).all():
                     if score_def:
                         aggc, _ = sfn(stack.to(dev), torch.ones(len(stack)), sctx, sp)
                         sc = float((aggc - agg0) @ bvec / bn)
@@ -657,3 +668,18 @@ def laysel_attack(train, model_ctor, global_vector, attacker_data: list, benign_
                                              "trained": x["trained"]} for x in log]})
     params["_lp_individual"] = out
     return out[0]
+
+
+
+def neurotoxin_mask(delta, params):
+    """Neurotoxin (16/11, fase 19): zera no delta do atacante as coordenadas do top `neuro_ratio` (padrão 1%) em
+    magnitude da média dos deltas honestos da rodada (proxy da atualização global recente)."""
+    import torch
+    ref = params.get("_benign_mean")
+    if ref is None:
+        return delta
+    k = max(1, int(params.get("neuro_ratio", 0.01) * ref.numel()))
+    idx = ref.abs().flatten().topk(k).indices
+    out = delta.clone().flatten()
+    out[idx.to(out.device)] = 0
+    return out.view_as(delta) * float(params.get("scale", 1.0))

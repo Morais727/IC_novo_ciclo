@@ -19,10 +19,12 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--seed", type=int, required=True)
     ap.add_argument("--defense", required=True)
+    # 18/11: repetição da MESMA configuração (variação entre execuções; a GPU não é determinística)
+    ap.add_argument("--rep", type=int, default=1)
     a = ap.parse_args()
     f8e.SEED = a.seed
     (f8e.OUT / "raw").mkdir(parents=True, exist_ok=True)
-    name = f"laysel_paper__{a.defense}__a{f8e.ALPHA}_s{a.seed}"
+    name = f"laysel_paper__{a.defense}__a{f8e.ALPHA}_s{a.seed}" + (f"_rep{a.rep}" if a.rep > 1 else "")
     f = f8e.OUT / "raw" / f"{name}.json"
     if f.exists():
         print(f"[skip] {name} já existe", flush=True); return
@@ -38,6 +40,7 @@ def main():
     while not mem_ok():
         time.sleep(30)
     c = f8e.cfg(a.defense)
+    c.name = name
     print(f"\n=== {name} pid={os.getpid()} device={c.device} ===", flush=True)
     json.dump(run(c), open(f, "w"), default=str)
     lock.unlink(missing_ok=True)

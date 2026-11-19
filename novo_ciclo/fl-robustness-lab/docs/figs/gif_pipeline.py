@@ -129,16 +129,16 @@ grab(fig, 3600)
 
 # 7) resultado
 fig = canvas("", "Resultado no treino completo",
-             "Cenário fiel do LaySelFL (ResNet18-GN, CIFAR-10), média de 4 sementes. Sem dados limpos no servidor e sem treino prévio.")
+             "Cenário fiel do LaySelFL (ResNet18-GN, CIFAR-10), média de 6 sementes. Sem dados limpos no servidor e sem treino prévio.")
 ax = fig.add_axes([0.05, 0.16, 0.9, 0.66]); ax.axis("off"); ax.set_xlim(0, 10); ax.set_ylim(0, 6)
 ax.add_patch(FancyBboxPatch((0.6, 1.2), 3.8, 3.6, boxstyle="round,pad=0.1", color="#F3F3F3"))
 ax.add_patch(FancyBboxPatch((5.6, 1.2), 3.8, 3.6, boxstyle="round,pad=0.1", color="#F3F3F3"))
 ax.text(2.5, 4.1, "sem defesa", ha="center", fontsize=24, color="#555555")
-ax.text(2.5, 2.6, "77,7%", ha="center", fontsize=64, color=RED, fontweight="bold")
+ax.text(2.5, 2.6, "80,0%", ha="center", fontsize=64, color=RED, fontweight="bold")
 ax.text(2.5, 1.6, "de sucesso do backdoor", ha="center", fontsize=18, color="#555555")
 ax.text(7.5, 4.1, "com a corroboração (corr-soft)", ha="center", fontsize=22, color="#555555")
-ax.text(7.5, 2.6, "5,5%", ha="center", fontsize=64, color=GRN, fontweight="bold")
-ax.text(7.5, 1.6, "acurácia: −1,9 pontos sem ataque", ha="center", fontsize=18, color="#555555")
+ax.text(7.5, 2.6, "5,0%", ha="center", fontsize=64, color=GRN, fontweight="bold")
+ax.text(7.5, 1.6, "acurácia: −1,8 ponto sem ataque", ha="center", fontsize=18, color="#555555")
 ax.annotate("", xy=(5.4, 3.0), xytext=(4.6, 3.0), arrowprops=dict(arrowstyle="-|>", color=ORG, lw=4, mutation_scale=30))
 grab(fig, 4500)
 

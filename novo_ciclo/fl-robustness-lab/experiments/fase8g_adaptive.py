@@ -35,7 +35,8 @@ SH = fase6.SH
 ALPHA, SEED, T = 0.9, 42, 8
 DEFENSES = [SH, "layer_guard_corr", "layer_guard_client", "layer_guard_corr_soft"]
 AGG_AWARE = ("layer_guard_corr_soft_tm", "layer_guard_corr_soft_clip",   # resposta ao adaptativo (15/11)
-             "layer_guard_corr_soft_grad", "layer_guard_corr_soft_rand")  # fase 20 (17/11)
+             "layer_guard_corr_soft_grad", "layer_guard_corr_soft_rand",  # fase 20 (17/11)
+             "layer_guard_corr_soft_estavel")  # fase 21 (19/11): mesma agregação da corr-soft; o piso e a memória só dificultam confirmar
 # 17/11 (fase 20): na variante de T sorteado, o atacante simula a corr-soft com cada T possível ({4..8}) e maximiza o
 # empurrão esperado — conhece a regra e a distribuição, não o sorteio do servidor.
 RAND_T_DIST = [4, 6, 8]   # o servidor sorteia em {4..8}; o atacante aproxima a esperança com 3 pontos (custo)
@@ -59,6 +60,8 @@ def cfg(defense):
         if defense == "layer_guard_corr_soft_rand":
             c.attack_params["evade_score_defense"] = "layer_guard_corr_soft"
             c.attack_params["evade_T_dist"] = RAND_T_DIST
+        if defense == "layer_guard_corr_soft_estavel":   # o atacante simula a corr-soft (a régua sem piso acusa mais; se escapa dela, escapa da estável)
+            c.attack_params["evade_score_defense"] = "layer_guard_corr_soft"
     c.name = f"laysel_adapt_T{T}__{tag(defense)}__a{ALPHA}_s{SEED}"
     return c
 

@@ -15,11 +15,11 @@ QLOG = f"{ROOT}/results/fase10/_fila_gpu.log"
 DEADLINE = datetime(2026, 11, 21, 23, 0)
 RX = re.compile(r"round (\d+)/(\d+) MA=([\d.]+)% BA=([\d.]+)%.*\((\d+)s\)\s*$")
 # duração típica (h) de um job inteiro por prefixo, usada só para quem ainda não começou
-TYP = {"a20": 30, "p20": 8, "f19": 0.3, "g13_escala100": 15, "l18": 7, "a17": 30, "m78": 0.3, "adp": 12, "a16": 14, "f8e": 7, "impf": 7, "g13": 8, "tsw": 7, "fp": 4, "rea": 1.5, "analise": 0.6, "c2": 1}
+TYP = {"f21": 9, "rep": 8, "tsw": 7, "a20": 30, "p20": 8, "f19": 0.3, "g13_escala100": 15, "l18": 7, "a17": 30, "m78": 0.3, "adp": 12, "a16": 14, "f8e": 7, "impf": 7, "g13": 8, "tsw": 7, "fp": 4, "rea": 1.5, "analise": 0.6, "c2": 1}
 
 
 def group(tag):
-    for p, name in (("a20", "Resposta ao adaptativo 2 (fase 20)"), ("p20", "Resposta ao adaptativo 2 (fase 20)"), ("f19", "Ataques das defesas citadas"), ("m78", "M7/M8 detecção"), ("l18", "Linha de base limpa"), ("a17", "Atacante intermediário"), ("a16", "Resposta ao adaptativo"), ("p16", "Resposta ao adaptativo"), ("adp", "Adversário adaptativo"),
+    for p, name in (("f21", "Régua estável (fase 21)"), ("rep", "Repetições (variação entre execuções)"), ("a20", "Resposta ao adaptativo 2 (fase 20)"), ("p20", "Resposta ao adaptativo 2 (fase 20)"), ("f19", "Ataques das defesas citadas"), ("m78", "M7/M8 detecção"), ("l18", "Linha de base limpa"), ("a17", "Atacante intermediário"), ("a16", "Resposta ao adaptativo"), ("p16", "Resposta ao adaptativo"), ("adp", "Adversário adaptativo"),
                     ("f8e", "Tabela principal"), ("impf", "Modelos finais (especificidade)"), ("rea", "Reativação"),
                     ("g13_escala", "Escala"), ("g13_cifar", "CIFAR-100"), ("tsw", "Varredura de T"),
                     ("fp", "Falsos positivos"), ("analise", "Análises"), ("c2", "Cenário 2")):

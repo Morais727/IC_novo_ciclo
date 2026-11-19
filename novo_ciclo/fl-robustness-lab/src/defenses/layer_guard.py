@@ -183,6 +183,7 @@ def layer_guard_corr_soft(deltas, weights, ctx, params):
             + np.maximum(rz(centered[:, s].norm(dim=1).cpu().numpy()), 0.0)
         flag[name] = z > z_thr
         count += flag[name]
+    _log_counts(ctx, deltas, count, T, flag)
     confirmed = count >= T
     agg = torch.zeros(deltas.shape[1], device=deltas.device, dtype=deltas.dtype)
     mw = (w / w.sum()).unsqueeze(1)
@@ -266,7 +267,20 @@ def _corr_detect(deltas, ctx, params):
             + np.maximum(rz(centered[:, s].norm(dim=1).cpu().numpy()), 0.0)
         flag[name] = z > z_thr
         count += flag[name]
+    _log_counts(ctx, deltas, count, T, flag)
     return groups, flag, count, count >= T
+
+
+def _log_counts(ctx, deltas, count, T, flag):
+    """17/11 (diagnóstico da fase 20): com FL_LOG_COUNTS=1, registra por rodada a contagem de acusações de cada cliente,
+    T e a norma total de cada atualização em ctx['state']['diag_log'] (sai no JSON do resultado). Sem a variável, nada muda."""
+    import os
+    if os.environ.get("FL_LOG_COUNTS") != "1":
+        return
+    ctx["state"].setdefault("diag_log", []).append({
+        "count": np.asarray(count).astype(int).tolist(), "T": int(T),
+        "norm": [round(float(v), 5) for v in deltas.norm(dim=1).cpu()],
+        "flag_tensors": {k: np.where(v)[0].tolist() for k, v in flag.items() if np.any(v)}})
 
 
 def _corr_soft_robust(deltas, weights, ctx, params, mode):
@@ -335,3 +349,53 @@ def layer_guard_corr_soft_rand(deltas, weights, ctx, params):
     agg, info = layer_guard_corr_soft(deltas, weights, ctx, {**params, "confirm_tensors": Tr})
     info["T_round"] = Tr
     return agg, info
+
+
+def layer_guard_corr_soft_estavel(deltas, weights, ctx, params):
+    """Fase 21 (18/11/2026) — corr-soft com RÉGUA ESTÁVEL, derivada do diagnóstico da fase 20 (no fim do treino os
+    honestos encolhem, o MAD vai a quase zero e diferenças mínimas viram z alto: honestos passam a ser acusados por
+    8–12 tensores e 3–4 são confirmados por engano por rodada, mesmo sem ataque). Desenho fixado antes de rodar, a partir
+    do teste sem treino nos logs do agregador-sombra (results/fase21/RESULTADO_offline2.md):
+      1. PISO na escala do z robusto: z = (x − med) / max(1,4826·MAD, piso), piso = 0,05 no cosseno e 0,25·mediana na
+         norma — a régua não encolhe abaixo de uma diferença que importa;
+      2. MEMÓRIA: confirmado só quem passou de T em pelo menos 2 das últimas 3 rodadas (o atacante insiste; o falso
+         alarme do honesto é esporádico);
+      3. agregação igual à corr-soft (troca pelo consenso dos aceitos, todos mantêm o peso).
+    Teste sem treino (6 sementes, ataque padrão): revocação 0,97 → 0,97; honestos confirmados por rodada 1,46 → 0,57;
+    sem ataque (α 0,9): 2,89 → 1,20."""
+    groups = ctx["state"].get("tensor_groups")
+    if groups is None:
+        from src.attacks.recent import tensor_groups
+        groups = ctx["state"]["tensor_groups"] = tensor_groups(ctx["model_ctor"]())
+    n, z_thr = deltas.shape[0], params.get("z_thr", 3.0)
+    T = params.get("confirm_tensors", 8)
+    pc, pn = params.get("piso_cos", 0.05), params.get("piso_norma", 0.25)
+    centered = deltas - deltas.median(dim=0).values
+
+    def rzf(v, floor):
+        med = np.median(v); mad = np.median(np.abs(v - med))
+        return (v - med) / max(1.4826 * mad, floor, 1e-12)
+    flag, count = {}, np.zeros(n)
+    for name, s in groups.items():
+        cs = _max_other_cos(centered[:, s]).cpu().numpy(); nr = centered[:, s].norm(dim=1).cpu().numpy()
+        z = np.maximum(rzf(cs, pc), 0.0) + np.maximum(rzf(nr, pn * float(np.median(nr))), 0.0)
+        flag[name] = z > z_thr
+        count += flag[name]
+    _log_counts(ctx, deltas, count, T, flag)
+    hist = ctx["state"].setdefault("_estavel_hist", [])
+    hist.append(count >= T)
+    del hist[:-3]
+    confirmed = (np.sum(hist, axis=0) >= 2) if len(hist) >= 2 else np.zeros(n, dtype=bool)
+    w = weights.to(deltas.device).float(); mw = (w / w.sum()).unsqueeze(1)
+    agg = torch.zeros(deltas.shape[1], device=deltas.device, dtype=deltas.dtype)
+    for name, s in groups.items():
+        keep = (~flag[name]) & (~confirmed)
+        if not keep.any():
+            keep = ~confirmed if (~confirmed).any() else np.ones(n, dtype=bool)
+        kmask = torch.tensor(keep, device=deltas.device)
+        x = deltas[:, s].clone()
+        x[~kmask] = x[kmask].median(dim=0).values
+        agg[s] = (x * mw).sum(dim=0)
+    return agg, {"excluded_indices": sorted(np.where(confirmed)[0].tolist()),
+                 "selected_indices": [i for i in range(n) if not confirmed[i]],
+                 "kept_fraction": [1.0] * n, "confirm_count": count.tolist()}

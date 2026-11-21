@@ -140,6 +140,7 @@ def layer_guard_corr(deltas, weights, ctx, params):
         f = z > z_thr
         flag[name] = f
         count += f
+    T = _T_round(count, T, params)
     confirmed = count >= T
     # 2ª passada: agrega removendo (marcado no tensor) OU (confirmado)
     agg = torch.zeros(deltas.shape[1], device=deltas.device, dtype=deltas.dtype)
@@ -183,6 +184,7 @@ def layer_guard_corr_soft(deltas, weights, ctx, params):
             + np.maximum(rz(centered[:, s].norm(dim=1).cpu().numpy()), 0.0)
         flag[name] = z > z_thr
         count += flag[name]
+    T = _T_round(count, T, params)
     _log_counts(ctx, deltas, count, T, flag)
     confirmed = count >= T
     agg = torch.zeros(deltas.shape[1], device=deltas.device, dtype=deltas.dtype)
@@ -238,6 +240,25 @@ def lg_shadow(deltas, weights, ctx, params):
     return (deltas * (w / w.sum()).unsqueeze(1)).sum(dim=0), {"excluded_indices": []}
 
 
+def _T_round(count, T, params):
+    """19/11 (fase 22): T automático. Com params["T_auto"] = k, o limiar da rodada sai da própria distribuição das
+    contagens (z robusto da contagem): confirmado se c_i > mediana(c) + k·max(1,4826·MAD(c), 1) e c_i >= 2.
+    params["T_cap"] (opcional) limita o T da rodada por cima. Sem T_auto, devolve o T fixo (nada muda)."""
+    import math
+    b = params.get("T_top")
+    if b is not None:   # 19/11: confirma os ⌈β·n⌉ clientes mais acusados (com c >= 2); β = fração máxima de atacantes assumida
+        c = np.sort(np.asarray(count, dtype=float))
+        return int(max(2, c[-int(math.ceil(float(b) * len(c)))]))
+    k = params.get("T_auto")
+    if k is None:
+        return T
+    c = np.asarray(count, dtype=float); med = np.median(c)
+    s = max(1.4826 * np.median(np.abs(c - med)), 1.0)
+    Tr = math.floor(max(2.0, med + float(k) * s + 1e-9)) + 1
+    cap = params.get("T_cap")
+    return int(min(Tr, cap)) if cap else int(Tr)
+
+
 # ----------------------------------------------------------------------------------------------------------------
 # RESPOSTA AO ADVERSÁRIO ADAPTATIVO (15/11/2026; desenho FIXADO ANTES DE RODAR — pedido do usuário, prioridade 1).
 # Diagnóstico (Fase 8G, 4 sementes): o atacante ciente da corroboração mantém a contagem < T em todo round
@@ -267,6 +288,7 @@ def _corr_detect(deltas, ctx, params):
             + np.maximum(rz(centered[:, s].norm(dim=1).cpu().numpy()), 0.0)
         flag[name] = z > z_thr
         count += flag[name]
+    T = _T_round(count, T, params)
     _log_counts(ctx, deltas, count, T, flag)
     return groups, flag, count, count >= T
 

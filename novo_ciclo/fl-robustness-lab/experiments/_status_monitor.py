@@ -15,11 +15,11 @@ QLOG = f"{ROOT}/results/fase10/_fila_gpu.log"
 DEADLINE = datetime(2026, 11, 21, 23, 0)
 RX = re.compile(r"round (\d+)/(\d+) MA=([\d.]+)% BA=([\d.]+)%.*\((\d+)s\)\s*$")
 # duração típica (h) de um job inteiro por prefixo, usada só para quem ainda não começou
-TYP = {"f21": 9, "rep": 8, "tsw": 7, "a20": 30, "p20": 8, "f19": 0.3, "g13_escala100": 15, "l18": 7, "a17": 30, "m78": 0.3, "adp": 12, "a16": 14, "f8e": 7, "impf": 7, "g13": 8, "tsw": 7, "fp": 4, "rea": 1.5, "analise": 0.6, "c2": 1}
+TYP = {"f22": 9, "f21": 9, "rep": 8, "tsw": 7, "a20": 30, "p20": 8, "f19": 0.3, "g13_escala100": 15, "l18": 7, "a17": 30, "m78": 0.3, "adp": 12, "a16": 14, "f8e": 7, "impf": 7, "g13": 8, "tsw": 7, "fp": 4, "rea": 1.5, "analise": 0.6, "c2": 1}
 
 
 def group(tag):
-    for p, name in (("f21", "Régua estável (fase 21)"), ("rep", "Repetições (variação entre execuções)"), ("a20", "Resposta ao adaptativo 2 (fase 20)"), ("p20", "Resposta ao adaptativo 2 (fase 20)"), ("f19", "Ataques das defesas citadas"), ("m78", "M7/M8 detecção"), ("l18", "Linha de base limpa"), ("a17", "Atacante intermediário"), ("a16", "Resposta ao adaptativo"), ("p16", "Resposta ao adaptativo"), ("adp", "Adversário adaptativo"),
+    for p, name in (("f22", "T automático (fase 22)"), ("f21", "Régua estável (fase 21)"), ("rep", "Repetições (variação entre execuções)"), ("a20", "Resposta ao adaptativo 2 (fase 20)"), ("p20", "Resposta ao adaptativo 2 (fase 20)"), ("f19", "Ataques das defesas citadas"), ("m78", "M7/M8 detecção"), ("l18", "Linha de base limpa"), ("a17", "Atacante intermediário"), ("a16", "Resposta ao adaptativo"), ("p16", "Resposta ao adaptativo"), ("adp", "Adversário adaptativo"),
                     ("f8e", "Tabela principal"), ("impf", "Modelos finais (especificidade)"), ("rea", "Reativação"),
                     ("g13_escala", "Escala"), ("g13_cifar", "CIFAR-100"), ("tsw", "Varredura de T"),
                     ("fp", "Falsos positivos"), ("analise", "Análises"), ("c2", "Cenário 2")):
@@ -53,9 +53,25 @@ def launched():
         m = re.search(r"-> GPU (\d+) \(pid (\d+)\) :: (\S+).*log=(\S+)", line)
         if m:   # guarda o lançamento VIVO mais recente (relançamentos que saem na hora não escondem o que roda)
             v = (int(m.group(2)), int(m.group(1)), m.group(4))
+            # 19/11: PID reaproveitado pelo sistema não conta como vivo (o processo tem de ter nascido perto do lançamento)
+            t0 = re.match(r"\[(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d)\]", line)
+            if t0 and alive(v[0]):
+                try:
+                    born = _born(v[0])
+                    if abs(born - datetime.strptime(t0.group(1), "%Y-%m-%d %H:%M:%S").timestamp()) > 900:
+                        continue
+                except OSError:
+                    continue
             if alive(v[0]) or m.group(3) not in d or not alive(d[m.group(3)][0]):
                 d[m.group(3)] = v
     return d
+
+
+def _born(pid):
+    """Hora de início do processo (starttime de /proc/<pid>/stat + btime do boot)."""
+    st = open(f"/proc/{pid}/stat").read().rsplit(")", 1)[1].split()
+    btime = next(int(l.split()[1]) for l in open("/proc/stat") if l.startswith("btime"))
+    return btime + int(st[19]) / os.sysconf("SC_CLK_TCK")
 
 
 def alive(pid):
@@ -88,7 +104,12 @@ def progress(log):
 
 def _gate_failed(kind, seed):
     """Veredito em cache da fila (results/fase10/.gate_cache): 1 = não pegou."""
-    for f in glob.glob(f"{ROOT}/results/fase10/.gate_cache/gate*_{kind}__lg_shadow__s{seed}.json_*"):
+    # 19/11: só o veredito do arquivo ATUAL (chave = mtime); um veredito gravado enquanto o JSON era escrito ficava
+    # no cache com "1" e o monitor marcava as defesas como descartadas, embora a fila as lançasse.
+    raw = f"{ROOT}/results/fase13/raw/{kind}__lg_shadow__s{seed}.json"
+    if not os.path.exists(raw):
+        return None
+    for f in glob.glob(f"{ROOT}/results/fase10/.gate_cache/gate*_{kind}__lg_shadow__s{seed}.json_{int(os.path.getmtime(raw))}"):
         return open(f).read().strip() == "1"
     return None
 
